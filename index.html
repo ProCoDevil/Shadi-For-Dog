@@ -1,256 +1,891 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>TinDog</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhaval's Mini Tasks PWA</title>
+    <!-- PWA Manifest for installation and icons -->
+    <link rel="manifest" href="data:application/manifest+json,{
+        'name': 'Dhaval Mini Tasks',
+        'short_name': 'MiniTasks',
+        'start_url': '.',
+        'display': 'standalone',
+        'background_color': '#ffffff',
+        'theme_color': '#2563eb',
+        'icons': [{'src': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMyNTYzZWIiLz4KPHRleHQgeD0iOTYiIHk9IjExMiIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjYwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk08L3RleHQ+Cjwvc3ZnPg==', 'sizes': '192x192', 'type': 'image/svg+xml'}]
+    }">
+    <!-- Chart.js CDN for visual data -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        /* Base Styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            /* Softer gradient for better look */
+            background: linear-gradient(135deg, #a7b7e8 0%, #6882cf 100%); 
+            min-height: 100vh; 
+        }
+        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; color: white; margin-bottom: 30px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .header h1 { font-size: 1.8em; margin-bottom: 10px; }
+        
+        /* Tabs */
+        .tabs { display: flex; background: rgba(255,255,255,0.3); border-radius: 50px; padding: 5px; margin-bottom: 20px; backdrop-filter: blur(5px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .tab-btn { flex: 1; padding: 12px 20px; border: none; background: none; color: white; border-radius: 40px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .tab-btn.active { background: white; color: #2563eb; box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
+        .tab-content { display: none; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+        .tab-content.active { display: block; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Forms & Buttons */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; }
+        input, select { width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 16px; transition: all 0.3s; background: #f9fafb; }
+        input:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+        .btn { 
+            background: linear-gradient(135deg, #2563eb, #1d4ed8); 
+            color: white; border: none; padding: 14px 24px; 
+            border-radius: 12px; font-size: 16px; font-weight: 600; 
+            cursor: pointer; transition: all 0.3s; width: 100%; 
+            box-shadow: 0 5px 15px rgba(37,99,235,0.3);
+            text-transform: uppercase;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(37,99,235,0.5); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
+        .delete-btn { background: #ef4444; color: white; }
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Montserrat|Ubuntu" rel="stylesheet">
+        /* Stock and Habits specific styles */
+        .profit { color: #10b981; font-weight: 700; font-size: 1.2em; }
+        .loss { color: #ef4444; font-weight: 700; font-size: 1.2em; }
+        .stats { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 20px; }
+        .stats.loss { background: linear-gradient(135deg, #dc2626, #991b1b); }
+        .trade-list { max-height: 300px; overflow-y: auto; margin-top: 20px; }
+        .trade-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8fafc; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .trade-info { flex: 1; }
+        .trade-actions { display: flex; gap: 8px; }
+        .delete-btn-sm, .edit-btn { padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .delete-btn-sm { background: #ef4444; color: white; }
+        .edit-btn { background: #f59e0b; color: white; }
+        
+        /* Habits specific styles */
+        .habit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-top: 20px; }
+        .habit-item { text-align: center; padding: 20px 10px; background: #f8fafc; border-radius: 16px; border: 3px solid transparent; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .habit-item.checked { background: linear-gradient(135deg, #10b981, #059669); color: white; border-color: #10b981; transform: scale(1.03); }
+        .streak { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 15px; border-radius: 12px; text-align: center; font-weight: 700; margin-top: 20px; }
+        
+        /* LLM Results & Loading */
+        .nutrition-chart-container { margin-top: 15px; padding: 15px; background: #f0fff4; border-radius: 12px; border: 1px solid #10b981; }
+        .llm-habit-tip { padding: 15px; background: #e0f2f1; border-radius: 12px; border: 1px solid #26a69a; color: #004d40; font-weight: 600; }
+        .loading {
+            text-align: center; color: #6b7280; font-style: italic;
+            padding: 10px;
+            animation: pulse 1.5s infinite;
+        }
 
-  <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-  <link rel="stylesheet" href="css/styles.css">
+        /* Nutrition Table Style - FORCED COLUMN STACKING */
+        .nutrition-table-wrapper {
+            /* Ensures Chart and Table are always stacked vertically */
+            display: flex;
+            flex-direction: column; 
+            gap: 20px;
+            padding: 10px;
+        }
+        .nutrition-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .nutrition-table th, .nutrition-table td {
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .nutrition-table th {
+            background-color: #d1fae5;
+            color: #047857;
+            font-weight: 700;
+        }
+        .nutrition-table tr:last-child td {
+            border-bottom: none;
+        }
+        .nutrition-table .main-macro {
+            font-weight: 700;
+            color: #059669;
+        }
+        /* Chart specific styles */
+        .macro-chart-container {
+            width: 100%;
+            max-width: 250px; /* Limit chart size */
+            margin: 0 auto; /* Center the chart when stacked */
+            position: relative;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
 
-  <!-- Font Awesome -->
-  <script defer src="https://use.fontawesome.com/releases/v5.0.7/js/all.js"></script>
-
-  <!-- Bootstrap Scripts -->
-  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
-    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous">
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous">
-  </script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
-    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous">
-  </script>
+        /* Responsive Adjustments for 4 Tabs - REMOVED ROW LAYOUT OVERRIDE */
+        @media (max-width: 480px) { 
+            .container { padding: 15px; } 
+            .header h1 { font-size: 1.5em; } 
+            .tabs { flex-wrap: wrap; }
+            .tab-btn { padding: 10px 15px; font-size: 14px; }
+        }
+        
+        /* --- NEW MODAL STYLES FOR POPUP --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Dark semi-transparent background */
+            display: flex; 
+            justify-content: center;
+            align-items: center; /* Center the modal vertically and horizontally */
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 90%;
+            width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
 </head>
-
 <body>
-
-  <section class="colored-section" id="title">
-
-    <div class="container-fluid">
-
-      <!-- Nav Bar -->
-
-      <nav class="navbar navbar-expand-lg navbar-dark">
-
-        <a class="navbar-brand" href="">Tindog</a>
-
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
-
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-              <a class="nav-link" href="#footer">Contact</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#pricing">Pricing</a>
-            </li>
-
-            <li class="nav-item">
-              <a class="nav-link" href="#cta">Download</a>
-            </li>
-
-          </ul>
-
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Dhaval's Mini Tasks</h1>
+            <p>Stocks | Nutrition | Habits | Settings</p>
         </div>
-      </nav>
-
-
-      <!-- Title -->
-
-      <div class="row">
-
-        <div class="col-lg-6">
-          <h1 class="big-heading">Meet new and interesting dogs nearby.</h1>
-          <button type="button" class="btn btn-dark btn-lg download-button"><i class="fab fa-apple"></i>
-            Download</button>
-          <button type="button" class="btn btn-outline-light btn-lg download-button"><i class="fab fa-google-play"></i>
-            Download</button>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('stocks')">📈 Stocks</button>
+            <button class="tab-btn" onclick="switchTab('bmi')">🥜 Nutrition</button>
+            <button class="tab-btn" onclick="switchTab('habits')">✅ Habits</button>
+            <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
         </div>
 
-        <div class="col-lg-6">
-          <img class="title-image" src="images/iphone6.png" alt="iphone-mockup">
+        <!-- Stocks Portfolio -->
+        <div id="stocks" class="tab-content active">
+            <div id="totalPL" class="stats" style="display: none;">
+                <div>Total P/L: <span id="totalPLAmount">₹0</span></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Stock Name</label>
+                <input type="text" id="stockName" placeholder="e.g., RELIANCE">
+            </div>
+            <div class="form-group">
+                <label>Buy Price (₹)</label>
+                <input type="number" id="buyPrice" placeholder="3500">
+            </div>
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" id="quantity" placeholder="10">
+            </div>
+            <div class="form-group">
+                <label>Sell Price (₹) <small>(optional)</small></label>
+                <input type="number" id="sellPrice" placeholder="3800">
+            </div>
+            <button class="btn" onclick="addTrade()">➕ Add Trade</button>
+            
+            <div class="trade-list" id="tradeList"></div>
         </div>
 
-      </div>
+        <!-- NUTRITION COUNTER -->
+        <div id="bmi" class="tab-content">
+            <div class="form-group">
+                <label>Food & Quantity for Analysis (जैसे: 100 grams paneer)</label>
+                <input type="text" id="foodInput" placeholder="e.g., 100 grams paneer, 1 serving poha">
+            </div>
+            <button class="btn" style="background: linear-gradient(135deg, #059669, #10b981);" onclick="analyzeNutrition()">🔍 Get Nutrition Data</button>
+            
+            <!-- LLM Result Container - Now designed for a beautiful chart -->
+            <div id="nutritionResult" class="nutrition-chart-container" style="display: none; margin-top: 15px;">
+                <!-- Content will be injected here -->
+            </div>
+        </div>
 
+        <!-- Habits Tracker -->
+        <div id="habits" class="tab-content">
+            <div class="form-group">
+                <label>Today's Date: <span id="todayDate"></span></label>
+            </div>
+            <!-- New LLM Feature Button and Result Container -->
+            <button class="btn" style="margin-bottom: 15px;" onclick="generateExecutionTip()">✨ Daily Execution Tip</button>
+            <div id="llmHabitTip" class="llm-habit-tip" style="display: none;"></div>
+            <div class="habit-grid">
+                <div class="habit-item" data-habit="gym" onclick="toggleHabit('gym')">
+                    <div style="font-size: 2em;">💪</div>
+                    <div>Gym</div>
+                </div>
+                <div class="habit-item" data-habit="water" onclick="toggleHabit('water')">
+                    <div style="font-size: 2em;">💧</div>
+                    <div>Water (2L)</div>
+                </div>
+                <div class="habit-item" data-habit="meditation" onclick="toggleHabit('meditation')">
+                    <div style="font-size: 2em;">🧘</div>
+                    <div>Meditation</div>
+                </div>
+                <div class="habit-item" data-habit="code" onclick="toggleHabit('code')">
+                    <div style="font-size: 2em;">💻</div>
+                    <div>Side Code</div>
+                </div>
+            </div>
+            <div id="streakInfo" class="streak" style="display: none;"></div>
+        </div>
+
+        <!-- Settings Menu (New) -->
+        <div id="settings" class="tab-content">
+            <div class="form-group">
+                <label for="themeColor">App Theme Color</label>
+                <input type="color" id="themeColor" value="#2563eb" style="height: 40px; padding: 5px; border-radius: 8px;">
+                <button class="btn" style="margin-top: 10px;" onclick="setTheme()">🎨 Apply Theme</button>
+            </div>
+
+            <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e5e7eb;">
+
+            <!-- MODIFIED: Only Stock Export remains here -->
+            <div class="form-group">
+                <label>Data Management (Use with caution)</label>
+                <button class="btn" style="width: 100%; margin-bottom: 10px; background: linear-gradient(135deg, #059669, #10b981);" onclick="exportTrades()">⬇️ Export Stock Trades (CSV)</button>
+            </div>
+            
+            <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e5e7eb;">
+
+            <!-- ADDED: Clear All Data moved to its own section -->
+            <div class="form-group">
+                <label>Total Reset</label>
+                <button class="btn delete-btn" style="width: 100%;" onclick="clearAllData()">⚠️ Clear All Data</button>
+            </div>
+        </div>
     </div>
 
-  </section>
-
-
-  <!-- Features -->
-
-  <section class="white-section" id="features">
-
-    <div class="container-fluid">
-
-      <div class="row">
-        <div class="feature-box col-lg-4">
-          <i class="icon fas fa-check-circle fa-4x"></i>
-          <h3 class="feature-title">Easy to use.</h3>
-          <p>So easy to use, even your dog could do it.</p>
+    <!-- Custom Modal/Feedback Containers -->
+    <div id="modalContainer" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <p id="modalMessage" style="font-weight: 600; margin-bottom: 15px; color: #374151;">Modal Message</p>
+            <input type="text" id="modalInput" placeholder="Enter value..." style="margin-bottom: 15px;">
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="modalCancel" class="delete-btn-sm" style="background: #6b7280;">Cancel</button>
+                <button id="modalConfirm" class="btn" style="width: auto; padding: 10px 15px;">Confirm</button>
+            </div>
         </div>
-
-        <div class="feature-box col-lg-4">
-          <i class="icon fas fa-bullseye fa-4x"></i>
-          <h3 class="feature-title">Elite Clientele</h3>
-          <p>We have all the dogs, the greatest dogs.</p>
-        </div>
-
-        <div class="feature-box col-lg-4">
-          <i class="icon fas fa-heart fa-4x"></i>
-          <h3 class="feature-title">Guaranteed to work.</h3>
-          <p>Find the love of your dog's life or your money back.</p>
-        </div>
-      </div>
-
-
     </div>
-  </section>
+    <div id="feedbackContainer"></div>
+
+    <script>
+        // --- Gemini API Configuration ---
+        const apiKey = ""; 
+        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=" + apiKey;
+        let macroChart = null; // Variable to hold the Chart.js instance
+
+        /**
+         * Generic function to make an LLM API call with exponential backoff.
+         * Handles both plain text and structured JSON responses.
+         */
+        async function makeLLMCall(userQuery, systemPrompt, responseConfig = {}, maxRetries = 3) {
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                // Add generationConfig for structured output if provided
+                ...(Object.keys(responseConfig).length > 0 && { generationConfig: responseConfig }),
+            };
+            
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 429 && attempt < maxRetries - 1) {
+                            const delay = Math.pow(2, attempt) * 1000;
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            continue;
+                        }
+                        throw new Error(`API error: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (responseConfig.responseMimeType === "application/json") {
+                        const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                        try {
+                            return JSON.parse(jsonText);
+                        } catch (e) {
+                            console.error("Failed to parse JSON response:", jsonText);
+                            return null;
+                        }
+                    } else {
+                        return result.candidates?.[0]?.content?.parts?.[0]?.text || "Error: Could not generate content.";
+                    }
+
+                } catch (error) {
+                    if (attempt === maxRetries - 1) {
+                        console.error("LLM Call failed after retries:", error);
+                        return "LLM service unavailable. Please try again later.";
+                    }
+                }
+            }
+        }
 
 
-  <!-- Testimonials -->
+        // --- Core Utilities and PWA Setup ---
 
-  <section class="colored-section" id="testimonials">
+        // Data Storage: Using localStorage
+        let trades = JSON.parse(localStorage.getItem('trades')) || [];
+        let habits = JSON.parse(localStorage.getItem('habits')) || {};
 
-    <div id="testimonial-carousel" class="carousel slide" data-ride="false">
-      <div class="carousel-inner">
-        <div class="carousel-item active container-fluid">
-          <h2 class="testimonial-text">I no longer have to sniff other dogs for love. I've found the hottest Corgi on
-            TinDog. Woof.</h2>
-          <img class="testimonial-image" src="images/dog-img.jpg" alt="dog-profile">
-          <em>Pebbles, New York</em>
-        </div>
-        <div class="carousel-item container-fluid">
-          <h2 class="testimonial-text">My dog used to be so lonely, but with TinDog's help, they've found the love of
-            their life. I think.</h2>
-          <img class="testimonial-image" src="images/lady-img.jpg" alt="lady-profile">
-          <em>Beverly, Illinois</em>
-        </div>
-      </div>
-      <a class="carousel-control-prev" href="#testimonial-carousel" role="button" data-slide="prev">
-        <span class="carousel-control-prev-icon"></span>
-      </a>
-      <a class="carousel-control-next" href="#testimonial-carousel" role="button" data-slide="next">
-        <span class="carousel-control-next-icon"></span>
-      </a>
-    </div>
+        // --- Custom UI Feedback (Replacing alert() and prompt()) ---
+        
+        function showFeedback(message, type = 'success') {
+            const container = document.getElementById('feedbackContainer');
+            const box = document.createElement('div');
+            box.className = `feedback-box ${type}`;
+            box.textContent = message;
+            container.appendChild(box);
 
-  </section>
+            setTimeout(() => {
+                box.remove();
+            }, 3000);
+        }
+
+        function showPrompt(message, defaultValue, callback) {
+            const modal = document.getElementById('modalContainer');
+            const msgEl = document.getElementById('modalMessage');
+            const inputEl = document.getElementById('modalInput');
+            const confirmBtn = document.getElementById('modalConfirm');
+            const cancelBtn = document.getElementById('modalCancel');
+
+            msgEl.textContent = message;
+            inputEl.value = defaultValue || '';
+            modal.style.display = 'flex';
+            inputEl.focus();
+
+            const handleConfirm = () => {
+                modal.style.display = 'none';
+                callback(inputEl.value);
+                confirmBtn.removeEventListener('click', handleConfirm);
+                cancelBtn.removeEventListener('click', handleCancel);
+            };
+
+            const handleCancel = () => {
+                modal.style.display = 'none';
+                callback(null);
+                confirmBtn.removeEventListener('click', handleConfirm);
+                cancelBtn.removeEventListener('click', handleCancel);
+            };
+
+            confirmBtn.addEventListener('click', handleConfirm);
+            cancelBtn.addEventListener('click', handleCancel);
+        }
+
+        // --- Tab Switching ---
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            
+            document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            
+            if (tabName === 'stocks') updateTradeList();
+            if (tabName === 'habits') initHabits();
+            if (tabName === 'settings') {
+                document.getElementById('themeColor').value = document.body.style.getPropertyValue('--primary-color') || '#2563eb';
+            }
+        }
+
+        // --- Stocks Portfolio Functions ---
+        
+        function addTrade() {
+            const name = document.getElementById('stockName').value.trim();
+            const buy = parseFloat(document.getElementById('buyPrice').value);
+            const qty = parseInt(document.getElementById('quantity').value);
+            const sell = parseFloat(document.getElementById('sellPrice').value) || null;
+
+            if (!name || !buy || !qty) {
+                showFeedback('Name, Buy Price, aur Quantity fill kar bhai! (Fill Name, Buy Price, and Quantity!)', 'error');
+                return;
+            }
+
+            const trade = { id: Date.now(), name, buy, qty, sell, date: new Date().toLocaleDateString() };
+            trades.unshift(trade);
+            localStorage.setItem('trades', JSON.stringify(trades));
+            
+            document.getElementById('stockName').value = '';
+            document.getElementById('buyPrice').value = '';
+            document.getElementById('quantity').value = '';
+            document.getElementById('sellPrice').value = '';
+            
+            updateTradeList();
+            showFeedback('Trade added successfully!', 'success');
+        }
+
+        function updateTradeList() {
+            const list = document.getElementById('tradeList');
+            const totalPL = trades.reduce((sum, trade) => {
+                if (trade.sell) sum += (trade.sell - trade.buy) * trade.qty;
+                return sum;
+            }, 0);
+
+            const totalPLDiv = document.getElementById('totalPL');
+            const totalPLAmount = document.getElementById('totalPLAmount');
+            totalPLAmount.textContent = `₹${totalPL.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+            totalPLDiv.style.display = trades.length > 0 ? 'block' : 'none';
+            totalPLDiv.className = totalPL >= 0 ? 'stats' : 'stats loss';
+
+            list.innerHTML = trades.map(trade => {
+                const pl = trade.sell ? (trade.sell - trade.buy) * trade.qty : 0;
+                const plClass = pl >= 0 ? 'profit' : 'loss';
+                const plText = trade.sell ? `₹${pl.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` : 'Pending';
+                
+                return `
+                    <div class="trade-item">
+                        <div class="trade-info">
+                            <div><strong>${trade.name.toUpperCase()}</strong></div>
+                            <div>Buy: ₹${trade.buy} | Qty: ${trade.qty} | ${trade.date}</div>
+                            ${trade.sell ? `<div>Sell: ₹${trade.sell}</div>` : ''}
+                            <div class="${plClass}">P/L: ${plText}</div>
+                        </div>
+                        <div class="trade-actions">
+                            ${!trade.sell ? `<button class="edit-btn" onclick="editTrade(${trade.id})">Sell Now</button>` : ''}
+                            <button class="delete-btn-sm" onclick="deleteTrade(${trade.id})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function deleteTrade(id) {
+            trades = trades.filter(t => t.id !== id);
+            localStorage.setItem('trades', JSON.stringify(trades));
+            updateTradeList();
+            showFeedback('Trade deleted.', 'success');
+        }
+
+        function editTrade(id) {
+            const trade = trades.find(t => t.id === id);
+            if (trade) {
+                showPrompt('Enter New Sell Price (₹):', trade.sell || '', (newSell) => {
+                    if (newSell !== null && newSell.trim() !== '' && !isNaN(parseFloat(newSell))) {
+                        const sellValue = parseFloat(newSell);
+                        if (sellValue > 0) {
+                            trade.sell = sellValue;
+                            localStorage.setItem('trades', JSON.stringify(trades));
+                            updateTradeList();
+                            showFeedback('Sell Price updated! P/L calculated.', 'success');
+                        } else {
+                            showFeedback('Invalid price entered.', 'error');
+                        }
+                    }
+                });
+            }
+        }
+
+        // --- Data Export Functions ---
+        
+        function convertToCSV(data, headers) {
+            let csv = headers.join(',') + '\n';
+            data.forEach(row => {
+                csv += headers.map(header => {
+                    let value = row[header] === undefined || row[header] === null ? '' : row[header];
+                    // Handle commas and quotes within data
+                    if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+                        value = `"${value.replace(/"/g, '""')}"`;
+                    }
+                    return value;
+                }).join(',') + '\n';
+            });
+            return csv;
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) { 
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showFeedback('CSV file downloaded successfully!', 'success');
+            }
+        }
+
+        function exportTrades() {
+            if (trades.length === 0) {
+                showFeedback('No trades found to export.', 'error');
+                return;
+            }
+            
+            const exportableTrades = trades.map(trade => ({
+                Name: trade.name.toUpperCase(),
+                Buy_Price: trade.buy,
+                Quantity: trade.qty,
+                Sell_Price: trade.sell || 'N/A',
+                P_L_Amount: trade.sell ? (trade.sell - trade.buy) * trade.qty : 'Pending',
+                Trade_Date: trade.date
+            }));
+
+            const headers = ['Name', 'Buy_Price', 'Quantity', 'Sell_Price', 'P_L_Amount', 'Trade_Date'];
+            const csv = convertToCSV(exportableTrades, headers);
+            downloadCSV(csv, `Dhaval_Stocks_${new Date().toISOString().slice(0, 10)}.csv`);
+        }
+
+        /* Removed exportHabits function as per user request */
 
 
-  <!-- Press -->
+        // --- NUTRITION ANALYZER (UPDATED for Chart) ---
 
-  <section class="colored-section" id="press">
-    <img class="press-logo" src="images/techcrunch.png" alt="tc-logo">
-    <img class="press-logo" src="images/tnw.png" alt="tnw-logo">
-    <img class="press-logo" src="images/bizinsider.png" alt="biz-insider-logo">
-    <img class="press-logo" src="images/mashable.png" alt="mashable-logo">
+        function extractGrams(dataArray, nutrientName) {
+            const item = dataArray.find(item => item.nutrient.toLowerCase().includes(nutrientName.toLowerCase()));
+            if (item && item.value) {
+                const match = item.value.match(/(\d+(\.\d+)?)\s*g/i); // Look for number followed by 'g'
+                return match ? parseFloat(match[1]) : 0;
+            }
+            return 0;
+        }
 
-  </section>
+        function drawMacroPieChart(macros, foodName) {
+            const chartData = [macros.protein, macros.carbs, macros.fat];
+            const labels = ['Protein', 'Carbs', 'Fat'];
+            
+            // Destroy previous chart instance if it exists
+            if (macroChart) {
+                macroChart.destroy();
+            }
+
+            const ctx = document.getElementById('macroPieChart').getContext('2d');
+            macroChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)', // Green for Protein
+                            'rgba(251, 191, 36, 0.8)', // Yellow for Carbs
+                            'rgba(239, 68, 68, 0.8)'   // Red for Fat
+                        ],
+                        borderColor: [
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(251, 191, 36, 1)',
+                            'rgba(239, 68, 68, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    family: 'Inter'
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Macro Breakdown (in grams)',
+                            font: {
+                                size: 16,
+                                family: 'Inter',
+                                weight: '600'
+                            }
+                        },
+                        tooltip: {
+                            // Custom tooltip to show value on hover
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + ' g';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function analyzeNutrition() {
+            const foodQuery = document.getElementById('foodInput').value.trim();
+            const resultDiv = document.getElementById('nutritionResult');
+            
+            if (!foodQuery) {
+                showFeedback("Please enter a food item and quantity (e.g., 100 grams paneer).", 'error');
+                return;
+            }
+
+            const systemPrompt = "You are an expert Indian diet and nutrition analyst. Analyze the user's food input and quantity. Provide the analysis in the requested JSON format. Ensure all key macro-nutrients (Calories, Protein, Carbs, Fat) are included in the 'data' array.";
+            
+            const userQuery = `Analyze the nutritional value of: ${foodQuery}. Provide the food name and the breakdown.`;
+            
+            const responseConfig = {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: "OBJECT",
+                    properties: {
+                        food_name: { type: "STRING", description: "The normalized name and quantity of the food analyzed (e.g., 100 grams Roasted Chana)." },
+                        data: {
+                            type: "ARRAY",
+                            description: "An array of key nutritional metrics.",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    nutrient: { type: "STRING" },
+                                    value: { type: "STRING" }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            resultDiv.innerHTML = '<div class="loading">Fetching nutrition data using Gemini AI... (Execution Mode ON)</div>';
+            resultDiv.style.display = 'block';
+
+            const nutritionData = await makeLLMCall(userQuery, systemPrompt, responseConfig);
+            
+            if (!nutritionData || !nutritionData.data) {
+                resultDiv.innerHTML = '<div>Error: Could not get structured data. Please try a different query.</div>';
+                showFeedback('Error in fetching nutrition data.', 'error');
+                return;
+            }
+            
+            // Extract macros for the chart
+            const macros = {
+                protein: extractGrams(nutritionData.data, 'protein'),
+                carbs: extractGrams(nutritionData.data, 'carb'),
+                fat: extractGrams(nutritionData.data, 'fat'),
+            };
+
+            // --- UI Rendering ---
+            let tableHTML = `<table class="nutrition-table"><thead><tr><th>Nutrient</th><th>Value (per serving)</th></tr></thead><tbody>`;
+            
+            nutritionData.data.forEach(item => {
+                const isMacro = item.nutrient.match(/Calories|Protein|Carb|Fat/i);
+                tableHTML += `
+                    <tr>
+                        <td class="${isMacro ? 'main-macro' : ''}">${item.nutrient}</td>
+                        <td>${item.value}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table>`;
+            
+            // Combining table and chart into a responsive wrapper
+            // Stacking: Chart (Visual) first, then Table (Numeric)
+            resultDiv.innerHTML = `
+                <strong style="color: #059669; font-size: 1.1em; display: block; margin-bottom: 10px;">📊 Nutrition Breakdown for: ${nutritionData.food_name.toUpperCase()}</strong>
+                <div class="nutrition-table-wrapper">
+                    <div class="macro-chart-container">
+                        <canvas id="macroPieChart"></canvas>
+                    </div>
+                    ${tableHTML}
+                </div>
+            `;
+            
+            // Draw the chart after the canvas element is in the DOM
+            drawMacroPieChart(macros, nutritionData.food_name);
+
+            document.getElementById('foodInput').value = ''; // Clear input after successful analysis
+            showFeedback('Nutrition Chart Ready! Ab execution time hai! 💪', 'success');
+        }
 
 
-  <!-- Pricing -->
+        // --- Habits Tracker Functions ---
+        
+        function getTodayDateString() {
+            return new Date().toDateString();
+        }
 
-  <section class="white-section" id="pricing">
+        function initHabits() {
+            document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+            const today = getTodayDateString();
+            
+            document.querySelectorAll('.habit-item').forEach(item => {
+                const habitName = item.getAttribute('data-habit');
+                if (habits[habitName] && habits[habitName].date === today) {
+                    item.classList.add('checked');
+                } else {
+                    item.classList.remove('checked');
+                }
+            });
+            updateStreak();
+        }
 
-    <h2 class="section-heading">A Plan for Every Dog's Needs</h2>
-    <p>Simple and affordable price plans for your and your dog.</p>
+        function toggleHabit(habit) {
+            const today = getTodayDateString();
+            const item = document.querySelector(`[data-habit="${habit}"]`);
 
-    <div class="row">
+            if (!habits[habit]) habits[habit] = { count: 0, date: '' };
+            
+            if (habits[habit].date === today) {
+                habits[habit].date = ''; 
+                item.classList.remove('checked');
+                showFeedback(`Unchecked ${habit}. Keep focusing on execution!`, 'error');
+            } else {
+                habits[habit].date = today;
+                habits[habit].count = (habits[habit].count || 0) + 1;
+                item.classList.add('checked');
+                showFeedback(`Great job! ${habit} done for the day. ✅`, 'success');
+            }
+            
+            localStorage.setItem('habits', JSON.stringify(habits));
+            updateStreak();
+        }
 
-      <div class="pricing-column col-lg-4 col-md-6">
-        <div class="card">
-          <div class="card-header">
-            <h3>Chihuahua</h3>
-          </div>
-          <div class="card-body">
-            <h2 class="price-text">Free</h2>
-            <p>5 Matches Per Day</p>
-            <p>10 Messages Per Day</p>
-            <p>Unlimited App Usage</p>
-            <button class="btn btn-lg btn-block btn-outline-dark" type="button">Sign Up</button>
-          </div>
-        </div>
-      </div>
+        function updateStreak() {
+            const today = new Date();
+            let streak = 0;
+            let currentDay = new Date(today.getTime());
 
-      <div class="pricing-column col-lg-4 col-md-6">
-        <div class="card">
-          <div class="card-header">
-            <h3>Labrador</h3>
-          </div>
-          <div class="card-body">
-            <h2 class="price-text">$49 / mo</h2>
-            <p>Unlimited Matches</p>
-            <p>Unlimited Messages</p>
-            <p>Unlimited App Usage</p>
-            <button class="btn btn-lg btn-block btn-dark" type="button">Sign Up</button>
-          </div>
-        </div>
-      </div>
+            for (let i = 0; i < 365; i++) {
+                const dayString = currentDay.toDateString();
+                const gymHabit = habits['gym'];
+                
+                if (gymHabit && gymHabit.date === dayString) {
+                    streak++;
+                    currentDay.setDate(currentDay.getDate() - 1);
+                } else if (i === 0 && gymHabit && gymHabit.date !== getTodayDateString()) {
+                    break;
+                } else if (i > 0 && gymHabit && gymHabit.date !== dayString) {
+                    break;
+                } else {
+                    break;
+                }
+            }
 
-      <div class="pricing-column col-lg-4">
-        <div class="card">
-          <div class="card-header">
-            <h3>Mastiff</h3>
-          </div>
-          <div class="card-body">
-            <h2 class="price-text">$99 / mo</h2>
-            <p>Pirority Listing</p>
-            <p>Unlimited Matches</p>
-            <p>Unlimited Messages</p>
-            <p>Unlimited App Usage</p>
-            <button class="btn btn-lg btn-block btn-dark" type="button">Sign Up</button>
+            const streakDiv = document.getElementById('streakInfo');
+            if (streak > 0) {
+                streakDiv.style.display = 'block';
+                streakDiv.textContent = `Gym Streak: ${streak} day${streak > 1 ? 's' : ''}! 🔥 Keep up the Warrior energy!`;
+            } else {
+                streakDiv.style.display = 'none';
+            }
+        }
 
-          </div>
-        </div>
-      </div>
+        // --- LLM Integration: Execution Tip ---
+        async function generateExecutionTip() {
+            const today = getTodayDateString();
+            const habitNames = ['gym', 'water', 'meditation', 'code'];
+            
+            let checkedHabits = [];
+            let uncheckedHabits = [];
 
+            habitNames.forEach(name => {
+                const isChecked = habits[name] && habits[name].date === today;
+                if (isChecked) {
+                    checkedHabits.push(name);
+                } else {
+                    uncheckedHabits.push(name);
+                }
+            });
 
+            const tipDiv = document.getElementById('llmHabitTip');
 
-    </div>
+            if (checkedHabits.length === 0 && uncheckedHabits.length === 4) {
+                 tipDiv.innerHTML = '<strong style="color: #ef4444;">No habits tracked today!</strong> You need a tip to start.';
+            }
 
-  </section>
+            const systemPrompt = "You are a motivating productivity coach focused on execution. Analyze the user's checked and unchecked habits and provide a single, short, high-energy, and actionable tip (max 2 sentences) to either celebrate progress or kickstart the most critical unchecked habit (Side Code or Gym, if unchecked). DO NOT include greetings or sign-offs.";
+            
+            const userQuery = `Habits completed today: ${checkedHabits.join(', ') || 'None'}. Habits remaining: ${uncheckedHabits.join(', ') || 'None'}. Provide a daily execution tip.`;
 
+            tipDiv.innerHTML = '<div class="loading">Analyzing your daily discipline...</div>';
+            tipDiv.style.display = 'block';
 
-  <!-- Call to Action -->
+            const tipText = await makeLLMCall(userQuery, systemPrompt);
+            
+            tipDiv.innerHTML = tipText;
+            showFeedback('Execution Tip received! Get to work. 💻', 'success');
+        }
+        
+        // --- Settings Functions ---
 
-  <section class="colored-section" id="cta">
+        function setTheme() {
+            const color = document.getElementById('themeColor').value;
+            const lighterColor = '#667eea';
 
-    <div class="container-fluid">
+            const styleTag = document.createElement('style');
+            styleTag.innerHTML = `
+                :root { --primary-color: ${color}; }
+                .tab-btn.active { color: ${color} !important; }
+                .tab-btn.active, input:focus, select:focus { border-color: ${color} !important; box-shadow: 0 0 0 3px ${color}33 !important; }
+                .btn { background: linear-gradient(135deg, ${color}, #1d4ed8); }
+                .btn:hover { box-shadow: 0 10px 25px ${color}33; }
+                body { background: linear-gradient(135deg, ${lighterColor} 0%, ${color} 100%); }
+                .stats { background: linear-gradient(135deg, ${color}, #1d4ed8); }
+            `;
+            const existingStyle = document.querySelector('style[data-theme="true"]');
+            if (existingStyle) existingStyle.remove();
+            
+            styleTag.setAttribute('data-theme', 'true');
+            document.head.appendChild(styleTag);
+            
+            const manifestLink = document.querySelector('link[rel="manifest"]');
+            if (manifestLink) {
+                let manifestData = manifestLink.getAttribute('href');
+                manifestData = manifestData.replace(/#2563eb/g, color);
+                manifestLink.setAttribute('href', manifestData);
+            }
+            
+            showFeedback(`Theme color set to ${color}!`, 'success');
+        }
 
-      <h3 class="big-heading">Find the True Love of Your Dog's Life Today.</h3>
-      <button class="download-button btn btn-lg btn-dark" type="button"><i class="fab fa-apple"></i> Download</button>
-      <button class="download-button btn btn-lg brn-light" type="button"><i class="fab fa-google-play"></i>
-        Download</button>
-    </div>
-  </section>
+        function clearAllData() {
+            // Using window.confirm as a fallback for the system modal, although Custom Modal is preferred.
+            if (window.confirm('Are you absolutely sure you want to delete ALL your data (Stocks, Habits)? This cannot be undone.')) {
+                localStorage.removeItem('trades');
+                localStorage.removeItem('habits');
+                
+                trades = [];
+                habits = {};
+                
+                updateTradeList();
+                initHabits();
 
+                showFeedback('All data has been cleared. Clean slate for execution! 💪', 'success');
+            } else {
+                showFeedback('Data clearance cancelled.', 'error');
+            }
+        }
 
-  <!-- Footer -->
-
-  <footer class="white-section" id="footer">
-    <div class="container-fluid">
-      <i class="social-icon fab fa-facebook-f"></i>
-      <i class="social-icon fab fa-twitter"></i>
-      <i class="social-icon fab fa-instagram"></i>
-      <i class="social-icon fas fa-envelope"></i>
-      <p style="font-size: 10px;">Special Thanks to Angela</p>
-      <p>© Copyright 2022 DhavalGOhel</p>
-    </div>
-
-  </footer>
-
-
+        // --- Initialize App ---
+        
+        window.onload = function() {
+            setTheme(); 
+            updateTradeList();
+            initHabits(); 
+        };
+    </script>
 </body>
-
 </html>

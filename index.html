@@ -41,7 +41,7 @@
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; }
         input, select { width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 16px; transition: all 0.3s; background: #f9fafb; }
-        input:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+        input:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px (37,99,235,0.15); }
         .btn { 
             background: linear-gradient(135deg, #2563eb, #1d4ed8); 
             color: white; border: none; padding: 14px 24px; 
@@ -257,6 +257,18 @@
 
             <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e5e7eb;">
 
+            <!-- NEW API KEY INPUT SECTION -->
+            <div class="form-group">
+                <label for="geminiApiKey">Gemini API Key</label>
+                <!-- Input field now handles password masking -->
+                <input type="text" id="geminiApiKey" placeholder="Enter your Gemini API Key">
+                <button class="btn btn-success" style="margin-top: 10px; background: linear-gradient(135deg, #3b82f6, #2563eb);" onclick="saveApiKey()">🔑 Save API Key</button>
+                <small id="apiKeyStatus" style="display: block; margin-top: 5px; color: #f59e0b;"></small>
+            </div>
+            <!-- END NEW API KEY INPUT SECTION -->
+
+            <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e5e7eb;">
+
             <!-- MODIFIED: Only Stock Export remains here -->
             <div class="form-group">
                 <label>Data Management (Use with caution)</label>
@@ -288,8 +300,9 @@
 
     <script>
         // --- Gemini API Configuration ---
-        const apiKey = ""; 
-        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=" + apiKey;
+        // API Key is now stored in localStorage and managed dynamically
+        let currentApiKey = ""; 
+        const API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
         let macroChart = null; // Variable to hold the Chart.js instance
 
         /**
@@ -297,6 +310,14 @@
          * Handles both plain text and structured JSON responses.
          */
         async function makeLLMCall(userQuery, systemPrompt, responseConfig = {}, maxRetries = 3) {
+            // Check for API Key before making the call
+            if (!currentApiKey || currentApiKey === "") {
+                showFeedback('❌ Gemini API Key required! Go to Settings (⚙️) to enter your key.', 'error');
+                return "API_KEY_MISSING";
+            }
+
+            const API_URL = API_BASE_URL + currentApiKey;
+
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
                 systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -550,9 +571,6 @@
             downloadCSV(csv, `Dhaval_Stocks_${new Date().toISOString().slice(0, 10)}.csv`);
         }
 
-        /* Removed exportHabits function as per user request */
-
-
         // --- NUTRITION ANALYZER (UPDATED for Chart) ---
 
         function extractGrams(dataArray, nutrientName) {
@@ -673,6 +691,12 @@
 
             const nutritionData = await makeLLMCall(userQuery, systemPrompt, responseConfig);
             
+            // Check for API key error
+            if (nutritionData === "API_KEY_MISSING") {
+                resultDiv.innerHTML = '<div>Go to Settings to enter your Gemini API Key to analyze nutrition.</div>';
+                return; 
+            }
+
             if (!nutritionData || !nutritionData.data) {
                 resultDiv.innerHTML = '<div>Error: Could not get structured data. Please try a different query.</div>';
                 showFeedback('Error in fetching nutrition data.', 'error');
@@ -825,11 +849,56 @@
 
             const tipText = await makeLLMCall(userQuery, systemPrompt);
             
+            // Check for API key error
+            if (tipText === "API_KEY_MISSING") {
+                tipDiv.innerHTML = '<strong style="color: #ef4444;">Please enter your Gemini API Key in the Settings (⚙️) tab to get an execution tip.</strong>';
+                return;
+            }
+
             tipDiv.innerHTML = tipText;
             showFeedback('Execution Tip received! Get to work. 💻', 'success');
         }
         
-        // --- Settings Functions ---
+        // --- Settings Functions: Theme and API Key Management ---
+
+        function initApiKey() {
+            const storedKey = localStorage.getItem('geminiApiKey');
+            const keyInput = document.getElementById('geminiApiKey');
+            const statusEl = document.getElementById('apiKeyStatus');
+
+            if (storedKey) {
+                currentApiKey = storedKey;
+                // Mask the key for display
+                keyInput.value = storedKey.substring(0, 5) + '...' + storedKey.substring(storedKey.length - 4);
+                keyInput.type = 'password';
+                statusEl.textContent = '🔑 Key Loaded. Gemini AI is ready.';
+                statusEl.style.color = '#10b981';
+            } else {
+                currentApiKey = "";
+                keyInput.type = 'text';
+                statusEl.textContent = '❌ API Key Missing! Please enter your key to use AI features.';
+                statusEl.style.color = '#ef4444';
+            }
+        }
+
+        function saveApiKey() {
+            const keyInput = document.getElementById('geminiApiKey');
+            const newKey = keyInput.value.trim();
+            const statusEl = document.getElementById('apiKeyStatus');
+
+            // Basic validation: Check if it looks like a key and isn't the masked value
+            if (newKey.length > 30 && !newKey.includes('...')) { 
+                localStorage.setItem('geminiApiKey', newKey);
+                currentApiKey = newKey;
+                initApiKey(); // Reload status and mask input
+                showFeedback('API Key saved successfully! Gemini AI unlocked.', 'success');
+            } else if (newKey.includes('...')) {
+                showFeedback('Key is already saved (masked). If you need to change it, enter the full new key.', 'error');
+            } else {
+                statusEl.textContent = 'Invalid Key format. Please enter the full key.';
+                statusEl.style.color = '#ef4444';
+            }
+        }
 
         function setTheme() {
             const color = document.getElementById('themeColor').value;
@@ -883,6 +952,7 @@
         
         window.onload = function() {
             setTheme(); 
+            initApiKey(); // Load API Key status
             updateTradeList();
             initHabits(); 
         };

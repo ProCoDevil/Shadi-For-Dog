@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dhaval's Mini Tasks PWA</title>
-    <!-- PWA Manifest for installation and icons -->
+    <!-- PWA Manifest -->
     <link rel="manifest" href="data:application/manifest+json,{
         'name': 'Dhaval Mini Tasks',
         'short_name': 'MiniTasks',
@@ -14,376 +14,600 @@
         'theme_color': '#2563eb',
         'icons': [{'src': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMyNTYzZWIiLz4KPHRleHQgeD0iOTYiIHk9IjExMiIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjYwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk08L3RleHQ+Cjwvc3ZnPg==', 'sizes': '192x192', 'type': 'image/svg+xml'}]
     }">
-    <!-- Chart.js CDN for visual data -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <style>
-        /* Base Styles */
+        /* Base Styles & Theming */
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg-gradient-start: #a7b7e8;
+            --bg-gradient-end: #6882cf;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            /* Softer gradient for better look */
-            background: linear-gradient(135deg, #a7b7e8 0%, #6882cf 100%); 
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%); 
             min-height: 100vh; 
+            padding-bottom: 120px; 
+            transition: background 0.5s ease; 
         }
         .container { max-width: 500px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; color: white; margin-bottom: 30px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .header h1 { font-size: 1.8em; margin-bottom: 10px; }
         
-        /* Tabs */
-        .tabs { display: flex; background: rgba(255,255,255,0.3); border-radius: 50px; padding: 5px; margin-bottom: 20px; backdrop-filter: blur(5px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .tab-btn { flex: 1; padding: 12px 20px; border: none; background: none; color: white; border-radius: 40px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
-        .tab-btn.active { background: white; color: #2563eb; box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
-        .tab-content { display: none; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
-        .tab-content.active { display: block; animation: slideIn 0.3s ease; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .header { text-align: center; color: white; margin-bottom: 25px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .header h1 { font-size: 1.8em; margin-bottom: 5px; }
+        .header p { font-size: 0.9em; opacity: 0.9; font-weight: 300; }
         
+        /* --- GLASSY BOTTOM NAVIGATION --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            max-width: 400px;
+            /* Ultra Glass Effect */
+            background: rgba(255, 255, 255, 0.15); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 15px 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .nav-item .icon {
+            font-size: 24px;
+            margin-bottom: 2px;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+            transition: transform 0.3s;
+        }
+
+        .nav-item.active {
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        
+        .nav-item.active .icon {
+            transform: translateY(-5px) scale(1.1);
+        }
+
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 8px white;
+        }
+
         /* Forms & Buttons */
+        .tab-content { display: none; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 15px 30px rgba(0,0,0,0.15); margin-bottom: 20px; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; }
         input, select { width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 16px; transition: all 0.3s; background: #f9fafb; }
-        input:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px (37,99,235,0.15); }
+        input:focus, select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+        
         .btn { 
-            background: linear-gradient(135deg, #2563eb, #1d4ed8); 
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); 
             color: white; border: none; padding: 14px 24px; 
             border-radius: 12px; font-size: 16px; font-weight: 600; 
             cursor: pointer; transition: all 0.3s; width: 100%; 
-            box-shadow: 0 5px 15px rgba(37,99,235,0.3);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
             text-transform: uppercase;
         }
-        .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(37,99,235,0.5); }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.25); filter: brightness(1.1); }
         .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
-        .delete-btn { background: #ef4444; color: white; }
-
-        /* Stock and Habits specific styles */
+        .btn-ai { background: linear-gradient(135deg, #8b5cf6, #6d28d9); font-size: 14px; padding: 8px 16px; margin-top: 5px; width: auto; display: inline-block; }
+        .btn-sell { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        
+        .stats { background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 20px; transition: background 0.5s ease; }
+        .stats.loss { background: linear-gradient(135deg, #dc2626, #991b1b); }
         .profit { color: #10b981; font-weight: 700; font-size: 1.2em; }
         .loss { color: #ef4444; font-weight: 700; font-size: 1.2em; }
-        .stats { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 20px; }
-        .stats.loss { background: linear-gradient(135deg, #dc2626, #991b1b); }
-        .trade-list { max-height: 300px; overflow-y: auto; margin-top: 20px; }
+        
+        .trade-list { max-height: 400px; overflow-y: auto; margin-top: 20px; padding-bottom: 10px; }
         .trade-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8fafc; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .trade-info { flex: 1; }
-        .trade-actions { display: flex; gap: 8px; }
-        .delete-btn-sm, .edit-btn { padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
-        .delete-btn-sm { background: #ef4444; color: white; }
-        .edit-btn { background: #f59e0b; color: white; }
+        .delete-btn-sm { background: #ef4444; color: white; padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
         
-        /* Habits specific styles */
-        .habit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-top: 20px; }
-        .habit-item { text-align: center; padding: 20px 10px; background: #f8fafc; border-radius: 16px; border: 3px solid transparent; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .habit-item.checked { background: linear-gradient(135deg, #10b981, #059669); color: white; border-color: #10b981; transform: scale(1.03); }
-        .streak { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 15px; border-radius: 12px; text-align: center; font-weight: 700; margin-top: 20px; }
-        
-        /* LLM Results & Loading */
-        .nutrition-chart-container { margin-top: 15px; padding: 15px; background: #f0fff4; border-radius: 12px; border: 1px solid #10b981; }
-        .llm-habit-tip { padding: 15px; background: #e0f2f1; border-radius: 12px; border: 1px solid #26a69a; color: #004d40; font-weight: 600; }
-        .loading {
-            text-align: center; color: #6b7280; font-style: italic;
-            padding: 10px;
-            animation: pulse 1.5s infinite;
+        /* --- WARDROBE STYLES --- */
+        .wardrobe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
         }
-
-        /* Nutrition Table Style - FORCED COLUMN STACKING */
-        .nutrition-table-wrapper {
-            /* Ensures Chart and Table are always stacked vertically */
+        .wardrobe-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: relative;
+            transition: transform 0.2s;
+            border: 1px solid #f0f0f0;
             display: flex;
-            flex-direction: column; 
-            gap: 20px;
-            padding: 10px;
+            flex-direction: column;
         }
+        .wardrobe-card:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.1); }
+        .wardrobe-img-container {
+            width: 100%;
+            height: 140px;
+            background: #f9fafb;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .wardrobe-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        .wardrobe-card:hover .wardrobe-img { transform: scale(1.05); }
+        .wardrobe-placeholder { font-size: 3em; opacity: 0.3; }
+        
+        .wardrobe-info { padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .wardrobe-title { font-size: 14px; font-weight: 700; color: #1f2937; margin-bottom: 4px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .wardrobe-cat { font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px; }
+        
+        .wardrobe-actions { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .buy-link { font-size: 11px; color: var(--primary-color); text-decoration: none; font-weight: 700; background: rgba(37, 99, 235, 0.1); padding: 4px 8px; border-radius: 6px; }
+        
+        .category-header {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: 800;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .category-header::after { content: ''; flex: 1; height: 2px; background: #f3f4f6; border-radius: 2px; }
+
+        /* LLM Results & Toast */
+        .nutrition-chart-container { 
+            margin-top: 15px; 
+            padding: 20px; 
+            background: #ffffff; 
+            border-radius: 16px; 
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .macro-chart-container {
+            width: 100%;
+            max-width: 250px; 
+            margin: 0 auto 20px auto; 
+            position: relative;
+        }
+        
         .nutrition-table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .nutrition-table th, .nutrition-table td {
-            padding: 10px 15px;
-            text-align: left;
-            border-bottom: 1px solid #f3f4f6;
+            margin-top: 15px;
+            font-size: 14px;
         }
         .nutrition-table th {
-            background-color: #d1fae5;
-            color: #047857;
+            text-align: left;
+            padding: 8px;
+            color: var(--primary-color);
+            border-bottom: 2px solid #f0f0f0;
             font-weight: 700;
         }
-        .nutrition-table tr:last-child td {
-            border-bottom: none;
+        .nutrition-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f5f5f5;
+            color: #374151;
         }
-        .nutrition-table .main-macro {
-            font-weight: 700;
-            color: #059669;
-        }
-        /* Chart specific styles */
-        .macro-chart-container {
-            width: 100%;
-            max-width: 250px; /* Limit chart size */
-            margin: 0 auto; /* Center the chart when stacked */
-            position: relative;
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        /* Responsive Adjustments for 4 Tabs - REMOVED ROW LAYOUT OVERRIDE */
-        @media (max-width: 480px) { 
-            .container { padding: 15px; } 
-            .header h1 { font-size: 1.5em; } 
-            .tabs { flex-wrap: wrap; }
-            .tab-btn { padding: 10px 15px; font-size: 14px; }
-        }
+        .nutrition-table tr:last-child td { border-bottom: none; }
         
-        /* --- NEW MODAL STYLES FOR POPUP --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6); /* Dark semi-transparent background */
-            display: flex; 
-            justify-content: center;
-            align-items: center; /* Center the modal vertically and horizontally */
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            max-width: 90%;
-            width: 350px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-            animation: fadeIn 0.3s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        #feedbackContainer { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 12px; width: 90%; max-width: 400px; pointer-events: none; }
+        .feedback-box { padding: 14px 24px; border-radius: 16px; color: white; font-weight: 600; text-align: center; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); animation: toastSlideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: auto; display: flex; align-items: center; justify-content: center; gap: 10px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .feedback-box.success { background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95)); }
+        .feedback-box.error { background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95)); }
+        @keyframes toastSlideDown { from { opacity: 0; transform: translateY(-20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 2001; backdrop-filter: blur(3px); }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; max-width: 90%; width: 350px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); animation: fadeIn 0.3s ease; }
+
+        /* Theme Grid */
+        .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 10px; }
+        .theme-option { height: 50px; width: 50px; border-radius: 50%; cursor: pointer; margin: 0 auto; border: 3px solid transparent; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .theme-option.selected { transform: scale(1.1); box-shadow: 0 0 0 2px white, 0 0 0 4px #374151; }
+        .theme-label { text-align: center; font-size: 11px; margin-top: 5px; color: #6b7280; }
+
+        /* Responsive */
+        @media (max-width: 480px) { .container { padding: 15px; } .header h1 { font-size: 1.5em; } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🚀 Dhaval's Mini Tasks</h1>
-            <p>Stocks | Nutrition | Habits | Settings</p>
+            <p>Execution Mode: ON</p>
         </div>
         
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('stocks')">📈 Stocks</button>
-            <button class="tab-btn" onclick="switchTab('bmi')">🥜 Nutrition</button>
-            <button class="tab-btn" onclick="switchTab('habits')">✅ Habits</button>
-            <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
-        </div>
-
         <!-- Stocks Portfolio -->
         <div id="stocks" class="tab-content active">
             <div id="totalPL" class="stats" style="display: none;">
                 <div>Total P/L: <span id="totalPLAmount">₹0</span></div>
             </div>
-            
-            <div class="form-group">
-                <label>Stock Name</label>
-                <input type="text" id="stockName" placeholder="e.g., RELIANCE">
-            </div>
-            <div class="form-group">
-                <label>Buy Price (₹)</label>
-                <input type="number" id="buyPrice" placeholder="3500">
-            </div>
-            <div class="form-group">
-                <label>Quantity</label>
-                <input type="number" id="quantity" placeholder="10">
-            </div>
-            <div class="form-group">
-                <label>Sell Price (₹) <small>(optional)</small></label>
-                <input type="number" id="sellPrice" placeholder="3800">
-            </div>
+            <div class="form-group"><label>Stock Name</label><input type="text" id="stockName" placeholder="e.g., RELIANCE"></div>
+            <div class="form-group"><label>Buy Price (₹)</label><input type="number" id="buyPrice" placeholder="3500"></div>
+            <div class="form-group"><label>Quantity</label><input type="number" id="quantity" placeholder="10"></div>
+            <!-- REMOVED SELL PRICE INPUT -->
             <button class="btn" onclick="addTrade()">➕ Add Trade</button>
-            
             <div class="trade-list" id="tradeList"></div>
         </div>
 
-        <!-- NUTRITION COUNTER -->
+        <!-- Nutrition -->
         <div id="bmi" class="tab-content">
-            <div class="form-group">
-                <label>Food & Quantity for Analysis (जैसे: 100 grams paneer)</label>
-                <input type="text" id="foodInput" placeholder="e.g., 100 grams paneer, 1 serving poha">
-            </div>
+            <div class="form-group"><label>Food & Quantity</label><input type="text" id="foodInput" placeholder="e.g., 100 grams paneer"></div>
             <button class="btn" style="background: linear-gradient(135deg, #059669, #10b981);" onclick="analyzeNutrition()">🔍 Get Nutrition Data</button>
-            
-            <!-- LLM Result Container - Now designed for a beautiful chart -->
-            <div id="nutritionResult" class="nutrition-chart-container" style="display: none; margin-top: 15px;">
-                <!-- Content will be injected here -->
-            </div>
+            <div id="nutritionResult" class="nutrition-chart-container" style="display: none; margin-top: 15px;"></div>
         </div>
 
-        <!-- Habits Tracker -->
+        <!-- To-Do -->
         <div id="habits" class="tab-content">
             <div class="form-group">
-                <label>Today's Date: <span id="todayDate"></span></label>
+                <label>New Task</label>
+                <input type="text" id="todoInput" placeholder="e.g., Plan a Birthday Party">
             </div>
-            <!-- New LLM Feature Button and Result Container -->
-            <button class="btn" style="margin-bottom: 15px;" onclick="generateExecutionTip()">✨ Daily Execution Tip</button>
-            <div id="llmHabitTip" class="llm-habit-tip" style="display: none;"></div>
-            <div class="habit-grid">
-                <div class="habit-item" data-habit="gym" onclick="toggleHabit('gym')">
-                    <div style="font-size: 2em;">💪</div>
-                    <div>Gym</div>
-                </div>
-                <div class="habit-item" data-habit="water" onclick="toggleHabit('water')">
-                    <div style="font-size: 2em;">💧</div>
-                    <div>Water (2L)</div>
-                </div>
-                <div class="habit-item" data-habit="meditation" onclick="toggleHabit('meditation')">
-                    <div style="font-size: 2em;">🧘</div>
-                    <div>Meditation</div>
-                </div>
-                <div class="habit-item" data-habit="code" onclick="toggleHabit('code')">
-                    <div style="font-size: 2em;">💻</div>
-                    <div>Side Code</div>
-                </div>
-            </div>
-            <div id="streakInfo" class="streak" style="display: none;"></div>
+            <button class="btn" onclick="addTodo()">✅ Add Task</button>
+            <div class="trade-list" id="todoList"></div>
         </div>
 
-        <!-- Settings Menu (New) -->
-        <div id="settings" class="tab-content">
-            <div class="form-group">
-                <label for="themeColor">App Theme Color</label>
-                <input type="color" id="themeColor" value="#2563eb" style="height: 40px; padding: 5px; border-radius: 8px;">
-                <button class="btn" style="margin-top: 10px;" onclick="setTheme()">🎨 Apply Theme</button>
-            </div>
-
-            <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e5e7eb;">
-
-            <!-- NEW API KEY INPUT SECTION -->
-            <div class="form-group">
-                <label for="geminiApiKey">Gemini API Key</label>
-                <!-- Input field now handles password masking -->
-                <input type="text" id="geminiApiKey" placeholder="Enter your Gemini API Key">
-                <button class="btn btn-success" style="margin-top: 10px; background: linear-gradient(135deg, #3b82f6, #2563eb);" onclick="saveApiKey()">🔑 Save API Key</button>
-                <small id="apiKeyStatus" style="display: block; margin-top: 5px; color: #f59e0b;"></small>
-            </div>
-            <!-- END NEW API KEY INPUT SECTION -->
-
-            <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e5e7eb;">
-
-            <!-- MODIFIED: Only Stock Export remains here -->
-            <div class="form-group">
-                <label>Data Management (Use with caution)</label>
-                <button class="btn" style="width: 100%; margin-bottom: 10px; background: linear-gradient(135deg, #059669, #10b981);" onclick="exportTrades()">⬇️ Export Stock Trades (CSV)</button>
+        <!-- WARDROBE SECTION -->
+        <div id="wardrobe" class="tab-content">
+            <div class="stats" style="margin-bottom: 25px; padding: 15px;">
+                <h3 style="margin: 0; font-size: 1.4em;">👔 Wardrobe Manager</h3>
             </div>
             
-            <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e5e7eb;">
+            <div style="background: #f8fafc; padding: 20px; border-radius: 16px; margin-bottom: 25px; border: 1px solid #e5e7eb;">
+                <!-- Link Input with AI Auto-Fill -->
+                <div class="form-group">
+                    <label>Product Link (Copy from Amazon/Myntra)</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="url" id="wLink" placeholder="Paste link here...">
+                    </div>
+                    <button class="btn btn-ai" onclick="autoFillWardrobe()">✨ Auto-Fill Name & Category</button>
+                </div>
 
-            <!-- ADDED: Clear All Data moved to its own section -->
-            <div class="form-group">
-                <label>Total Reset</label>
-                <button class="btn delete-btn" style="width: 100%;" onclick="clearAllData()">⚠️ Clear All Data</button>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="wCategory" onchange="toggleCustomCategory(this)">
+                        <option value="Shirts">Shirts</option>
+                        <option value="T-Shirts">T-Shirts</option>
+                        <option value="Jeans">Jeans/Trousers</option>
+                        <option value="Shoes">Shoes</option>
+                        <option value="Accessories">Accessories</option>
+                        <option value="custom">+ Add New Category</option>
+                    </select>
+                    <!-- Hidden input for custom category -->
+                    <input type="text" id="wCustomCategory" placeholder="Enter Custom Category Name" style="display: none; margin-top: 8px; border-color: #8b5cf6;">
+                </div>
+
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="wName" placeholder="e.g., White Linen Shirt">
+                </div>
+
+                <div class="form-group">
+                    <label>Image Address <small>(Right Click Image -> Copy Image Address)</small></label>
+                    <input type="url" id="wImg" placeholder="Paste image URL here">
+                </div>
+
+                <button class="btn" onclick="addWardrobeItem()">➕ Add Item</button>
             </div>
+
+            <div id="wardrobeGrid" class="wardrobe-grid"></div>
+        </div>
+
+        <!-- Settings -->
+        <div id="settings" class="tab-content">
+            <div class="form-group"><label>App Vibe</label>
+                <div class="theme-grid">
+                    <div><div class="theme-option" id="theme-ocean" onclick="applyTheme('ocean')" style="background: linear-gradient(135deg, #2563eb, #a7b7e8);"></div><div class="theme-label">Ocean</div></div>
+                    <div><div class="theme-option" id="theme-sunset" onclick="applyTheme('sunset')" style="background: linear-gradient(135deg, #ea580c, #fb923c);"></div><div class="theme-label">Energy</div></div>
+                    <div><div class="theme-option" id="theme-forest" onclick="applyTheme('forest')" style="background: linear-gradient(135deg, #059669, #6ee7b7);"></div><div class="theme-label">Growth</div></div>
+                    <div><div class="theme-option" id="theme-royal" onclick="applyTheme('royal')" style="background: linear-gradient(135deg, #7c3aed, #c4b5fd);"></div><div class="theme-label">Wisdom</div></div>
+                </div>
+            </div>
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #e5e7eb;">
+            <div class="form-group"><label>Gemini API Key</label><input type="text" id="geminiApiKey" placeholder="Enter API Key"><button class="btn btn-success" style="margin-top:10px;" onclick="saveApiKey()">🔑 Save Key</button></div>
+            <div class="form-group"><button class="btn delete-btn" style="margin-top:20px;" onclick="clearAllData()">⚠️ Reset App</button></div>
         </div>
     </div>
 
-    <!-- Custom Modal/Feedback Containers -->
+    <!-- FLOATING TRANSPARENT NAV -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('stocks')"><span class="icon">📈</span><span>Stocks</span></button>
+        <button class="nav-item" onclick="switchTab('bmi')"><span class="icon">🍎</span><span>Nutrition</span></button>
+        <button class="nav-item" onclick="switchTab('habits')"><span class="icon">✅</span><span>To-Do</span></button>
+        <button class="nav-item" onclick="switchTab('wardrobe')"><span class="icon">👔</span><span>Wardrobe</span></button>
+        <button class="nav-item" onclick="switchTab('settings')"><span class="icon">⚙️</span><span>Settings</span></button>
+    </nav>
+
     <div id="modalContainer" class="modal-overlay" style="display: none;">
         <div class="modal-content">
-            <p id="modalMessage" style="font-weight: 600; margin-bottom: 15px; color: #374151;">Modal Message</p>
-            <input type="text" id="modalInput" placeholder="Enter value..." style="margin-bottom: 15px;">
+            <p id="modalMessage" style="font-weight: 600; margin-bottom: 15px; color: #374151;">Msg</p>
+            <input type="text" id="modalInput" style="margin-bottom: 15px;">
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button id="modalCancel" class="delete-btn-sm" style="background: #6b7280;">Cancel</button>
-                <button id="modalConfirm" class="btn" style="width: auto; padding: 10px 15px;">Confirm</button>
+                <button id="modalCancel" class="delete-btn-sm" style="background:#9ca3af">Cancel</button>
+                <button id="modalConfirm" class="btn" style="width: auto; padding: 10px 15px;">OK</button>
             </div>
         </div>
     </div>
     <div id="feedbackContainer"></div>
 
     <script>
-        // --- Gemini API Configuration ---
-        // API Key is now stored in localStorage and managed dynamically
-        let currentApiKey = ""; 
-        const API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
-        let macroChart = null; // Variable to hold the Chart.js instance
+        // --- Core Data ---
+        let trades = JSON.parse(localStorage.getItem('trades')) || [];
+        let todos = JSON.parse(localStorage.getItem('todos')) || []; 
+        let wardrobe = JSON.parse(localStorage.getItem('wardrobe')) || [];
+        let currentApiKey = localStorage.getItem('geminiApiKey') || "";
 
-        /**
-         * Generic function to make an LLM API call with exponential backoff.
-         * Handles both plain text and structured JSON responses.
-         */
-        async function makeLLMCall(userQuery, systemPrompt, responseConfig = {}, maxRetries = 3) {
-            // Check for API Key before making the call
-            if (!currentApiKey || currentApiKey === "") {
-                showFeedback('❌ Gemini API Key required! Go to Settings (⚙️) to enter your key.', 'error');
-                return "API_KEY_MISSING";
-            }
+        // --- Gemini API (IMPROVED) ---
+        const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
+        let macroChart = null; // Defined here
 
-            const API_URL = API_BASE_URL + currentApiKey;
+        async function makeLLMCall(query, prompt, config = {}) {
+            if (!currentApiKey) return "API_KEY_MISSING";
+            try {
+                const res = await fetch(API_BASE + currentApiKey, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: query }] }],
+                        systemInstruction: { parts: [{ text: prompt }] },
+                        generationConfig: config
+                    })
+                });
+                
+                if(!res.ok) throw new Error(res.statusText);
+                
+                const data = await res.json();
+                let textResponse = data.candidates[0].content.parts[0].text;
 
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                // Add generationConfig for structured output if provided
-                ...(Object.keys(responseConfig).length > 0 && { generationConfig: responseConfig }),
-            };
-            
-            for (let attempt = 0; attempt < maxRetries; attempt++) {
-                try {
-                    const response = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        if (response.status === 429 && attempt < maxRetries - 1) {
-                            const delay = Math.pow(2, attempt) * 1000;
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                            continue;
-                        }
-                        throw new Error(`API error: ${response.statusText}`);
-                    }
-
-                    const result = await response.json();
-                    
-                    if (responseConfig.responseMimeType === "application/json") {
-                        const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                        try {
-                            return JSON.parse(jsonText);
-                        } catch (e) {
-                            console.error("Failed to parse JSON response:", jsonText);
-                            return null;
-                        }
-                    } else {
-                        return result.candidates?.[0]?.content?.parts?.[0]?.text || "Error: Could not generate content.";
-                    }
-
-                } catch (error) {
-                    if (attempt === maxRetries - 1) {
-                        console.error("LLM Call failed after retries:", error);
-                        return "LLM service unavailable. Please try again later.";
+                if(config.responseMimeType === "application/json") {
+                    textResponse = textResponse.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+                    try {
+                        return JSON.parse(textResponse);
+                    } catch (e) {
+                        console.error("JSON Parse Error:", e, textResponse);
+                        return null;
                     }
                 }
+                
+                return textResponse;
+            } catch(e) { 
+                console.error("API Call Error:", e); 
+                return null; 
             }
         }
 
+        // --- Nutrition Helpers ---
+        function extractGrams(dataArray, nutrientName) {
+            const item = dataArray.find(item => item.nutrient.toLowerCase().includes(nutrientName.toLowerCase()));
+            if (item && item.value) {
+                const match = item.value.match(/(\d+(\.\d+)?)/); 
+                return match ? parseFloat(match[0]) : 0;
+            }
+            return 0;
+        }
 
-        // --- Core Utilities and PWA Setup ---
+        function drawMacroPieChart(macros, foodName) {
+            if (macroChart) {
+                macroChart.destroy();
+            }
 
-        // Data Storage: Using localStorage
-        let trades = JSON.parse(localStorage.getItem('trades')) || [];
-        let habits = JSON.parse(localStorage.getItem('habits')) || {};
+            const ctx = document.getElementById('macroPieChart').getContext('2d');
+            macroChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Protein', 'Carbs', 'Fat'],
+                    datasets: [{
+                        data: [macros.protein, macros.carbs, macros.fat],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.85)', // Green for Protein
+                            'rgba(251, 191, 36, 0.85)', // Yellow for Carbs
+                            'rgba(239, 68, 68, 0.85)'   // Red for Fat
+                        ],
+                        borderColor: 'white',
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 12, family: 'Inter' }, padding: 20 } },
+                        title: { 
+                            display: true, 
+                            text: 'Macro Breakdown (grams)', 
+                            font: { size: 14, family: 'Inter', weight: '600' },
+                            padding: { bottom: 10 }
+                        },
+                        tooltip: { callbacks: { label: function(context) { return ' ' + context.label + ': ' + (context.parsed || 0) + ' g'; } } }
+                    },
+                    layout: { padding: 10 }
+                }
+            });
+        }
 
-        // --- Custom UI Feedback (Replacing alert() and prompt()) ---
-        
-        function showFeedback(message, type = 'success') {
-            const container = document.getElementById('feedbackContainer');
+        // --- Wardrobe Features ---
+        function toggleCustomCategory(select) {
+            const customInput = document.getElementById('wCustomCategory');
+            if (select.value === 'custom') {
+                customInput.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
+        }
+
+        async function autoFillWardrobe() {
+            const link = document.getElementById('wLink').value;
+            if(!link) { showFeedback('Please paste a link first!', 'error'); return; }
+            
+            showFeedback('🤖 AI Analyzing Link...', 'success');
+            
+            const prompt = "You are a shopping assistant. Analyze the URL provided by the user. Extract the Product Name (readable title) and suggest a Category (e.g., Shirts, Shoes, Watches, Tech, etc). Return JSON: { name: 'Product Name', category: 'CategoryName' }";
+            
+            const data = await makeLLMCall(link, prompt, { responseMimeType: "application/json" });
+            
+            if(data) {
+                document.getElementById('wName').value = data.name;
+                
+                const select = document.getElementById('wCategory');
+                const options = Array.from(select.options).map(o => o.value);
+                
+                if (options.includes(data.category)) {
+                    select.value = data.category;
+                    toggleCustomCategory(select);
+                } else {
+                    select.value = 'custom';
+                    toggleCustomCategory(select);
+                    document.getElementById('wCustomCategory').value = data.category;
+                }
+                
+                showFeedback('Auto-filled! Add Image URL manually.', 'success');
+            } else {
+                showFeedback('AI failed. Try manual entry.', 'error');
+            }
+        }
+
+        function addWardrobeItem() {
+            const select = document.getElementById('wCategory');
+            let category = select.value;
+            if (category === 'custom') {
+                category = document.getElementById('wCustomCategory').value.trim();
+                if(!category) { showFeedback('Enter custom category name!', 'error'); return; }
+            }
+
+            const name = document.getElementById('wName').value.trim();
+            const link = document.getElementById('wLink').value.trim();
+            const img = document.getElementById('wImg').value.trim();
+
+            if (!name) { showFeedback('Name is required!', 'error'); return; }
+
+            wardrobe.unshift({
+                id: Date.now(), // Unique ID number
+                category, name, link: link || '#', img: img || '', date: new Date().toLocaleDateString()
+            });
+            localStorage.setItem('wardrobe', JSON.stringify(wardrobe));
+            
+            document.getElementById('wName').value = '';
+            document.getElementById('wLink').value = '';
+            document.getElementById('wImg').value = '';
+            
+            updateWardrobeDisplay();
+            showFeedback('Item added to Wardrobe! 👔', 'success');
+        }
+
+        function deleteWardrobeItem(id) {
+            const prevLen = wardrobe.length;
+            wardrobe = wardrobe.filter(i => i.id !== id);
+            
+            if (wardrobe.length < prevLen) {
+                localStorage.setItem('wardrobe', JSON.stringify(wardrobe));
+                updateWardrobeDisplay();
+                showFeedback('Item deleted.', 'success');
+            } else {
+                showFeedback('Delete failed. ID mismatch.', 'error');
+            }
+        }
+
+        function updateWardrobeDisplay() {
+            const grid = document.getElementById('wardrobeGrid');
+            if (wardrobe.length === 0) {
+                grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#9ca3af;padding:20px">Wardrobe empty.</p>';
+                return;
+            }
+
+            const groups = {};
+            wardrobe.forEach(item => {
+                if (!groups[item.category]) groups[item.category] = [];
+                groups[item.category].push(item);
+            });
+
+            let html = '';
+            Object.keys(groups).sort().forEach(cat => {
+                html += `<div class="category-header">${cat}</div>`;
+                groups[cat].forEach(item => {
+                    const imgHtml = item.img 
+                        ? `<img src="${item.img}" class="wardrobe-img" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\'wardrobe-placeholder\'>👔</div>'">` 
+                        : `<div class="wardrobe-placeholder">👔</div>`;
+
+                    html += `
+                    <div class="wardrobe-card">
+                        <div class="wardrobe-img-container">
+                             ${imgHtml}
+                        </div>
+                        <div class="wardrobe-info">
+                            <div>
+                                <div class="wardrobe-cat">${item.category}</div>
+                                <div class="wardrobe-title">${item.name}</div>
+                            </div>
+                            <div class="wardrobe-actions">
+                                <a href="${item.link}" target="_blank" class="buy-link">LINK ↗</a>
+                                <button class="delete-btn-sm" onclick="deleteWardrobeItem(${item.id})">🗑️</button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            });
+            grid.innerHTML = html;
+        }
+
+        // --- Other Logic ---
+        function switchTab(t) {
+            document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+            document.getElementById(t).classList.add('active');
+            document.querySelector(`.nav-item[onclick="switchTab('${t}')"]`).classList.add('active');
+            if(t==='wardrobe') updateWardrobeDisplay();
+            if(t==='stocks') updateTradeList();
+            if(t==='habits') updateTodoList();
+        }
+
+        function showFeedback(msg, type='success') {
+            const el = document.getElementById('feedbackContainer');
             const box = document.createElement('div');
             box.className = `feedback-box ${type}`;
-            box.textContent = message;
-            container.appendChild(box);
-
-            setTimeout(() => {
-                box.remove();
-            }, 3000);
+            box.innerText = msg;
+            el.appendChild(box);
+            setTimeout(() => { box.remove(); }, 3000);
         }
 
         function showPrompt(message, defaultValue, callback) {
@@ -416,546 +640,191 @@
             cancelBtn.addEventListener('click', handleCancel);
         }
 
-        // --- Tab Switching ---
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
+        // Stocks
+        function addTrade(){ 
+            const n=document.getElementById('stockName').value.trim(); 
+            const b=parseFloat(document.getElementById('buyPrice').value); 
+            const q=parseInt(document.getElementById('quantity').value); 
             
-            document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            if(!n||!b||!q) return showFeedback('Fill details','error');
             
-            if (tabName === 'stocks') updateTradeList();
-            if (tabName === 'habits') initHabits();
-            if (tabName === 'settings') {
-                document.getElementById('themeColor').value = document.body.style.getPropertyValue('--primary-color') || '#2563eb';
-            }
-        }
-
-        // --- Stocks Portfolio Functions ---
-        
-        function addTrade() {
-            const name = document.getElementById('stockName').value.trim();
-            const buy = parseFloat(document.getElementById('buyPrice').value);
-            const qty = parseInt(document.getElementById('quantity').value);
-            const sell = parseFloat(document.getElementById('sellPrice').value) || null;
-
-            if (!name || !buy || !qty) {
-                showFeedback('Name, Buy Price, aur Quantity fill kar bhai! (Fill Name, Buy Price, and Quantity!)', 'error');
-                return;
-            }
-
-            const trade = { id: Date.now(), name, buy, qty, sell, date: new Date().toLocaleDateString() };
-            trades.unshift(trade);
-            localStorage.setItem('trades', JSON.stringify(trades));
+            // Sell price is explicitly NULL on creation
+            trades.unshift({id:Date.now(), name:n, buy:b, qty:q, sell:null, date: new Date().toLocaleDateString()}); 
+            localStorage.setItem('trades',JSON.stringify(trades)); 
             
+            // Clear inputs
             document.getElementById('stockName').value = '';
             document.getElementById('buyPrice').value = '';
             document.getElementById('quantity').value = '';
-            document.getElementById('sellPrice').value = '';
             
-            updateTradeList();
-            showFeedback('Trade added successfully!', 'success');
+            updateTradeList(); 
+            showFeedback('Stock Added! 📈', 'success');
         }
 
-        function updateTradeList() {
-            const list = document.getElementById('tradeList');
-            const totalPL = trades.reduce((sum, trade) => {
-                if (trade.sell) sum += (trade.sell - trade.buy) * trade.qty;
-                return sum;
-            }, 0);
+        function updateTradeList(){
+             const l=document.getElementById('tradeList');
+             if(!l) return;
+             
+             // Calc total realized PL
+             const totalPL = trades.reduce((sum, trade) => { 
+                 if (trade.sell) sum += (trade.sell - trade.buy) * trade.qty; 
+                 return sum; 
+             }, 0);
+             
+             const plDiv = document.getElementById('totalPL');
+             document.getElementById('totalPLAmount').textContent = `₹${totalPL.toLocaleString()}`; 
+             plDiv.style.display = trades.length > 0 ? 'block' : 'none';
+             plDiv.className = totalPL >= 0 ? 'stats' : 'stats loss';
 
-            const totalPLDiv = document.getElementById('totalPL');
-            const totalPLAmount = document.getElementById('totalPLAmount');
-            totalPLAmount.textContent = `₹${totalPL.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
-            totalPLDiv.style.display = trades.length > 0 ? 'block' : 'none';
-            totalPLDiv.className = totalPL >= 0 ? 'stats' : 'stats loss';
-
-            list.innerHTML = trades.map(trade => {
-                const pl = trade.sell ? (trade.sell - trade.buy) * trade.qty : 0;
+             l.innerHTML = trades.map(t => {
+                const isSold = t.sell !== null && t.sell !== undefined;
+                const pl = isSold ? (t.sell - t.buy) * t.qty : 0;
                 const plClass = pl >= 0 ? 'profit' : 'loss';
-                const plText = trade.sell ? `₹${pl.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` : 'Pending';
                 
                 return `
-                    <div class="trade-item">
-                        <div class="trade-info">
-                            <div><strong>${trade.name.toUpperCase()}</strong></div>
-                            <div>Buy: ₹${trade.buy} | Qty: ${trade.qty} | ${trade.date}</div>
-                            ${trade.sell ? `<div>Sell: ₹${trade.sell}</div>` : ''}
-                            <div class="${plClass}">P/L: ${plText}</div>
+                <div class="trade-item">
+                    <div class="trade-info">
+                        <div style="font-weight:700; font-size:1.1em;">${t.name.toUpperCase()}</div>
+                        <div style="color:#6b7280; font-size:0.9em; margin-top:2px;">
+                            Buy: ₹${t.buy} | Qty: ${t.qty} <br>
+                            ${isSold ? `Sold: ₹${t.sell}` : '<span style="color:#f59e0b; font-weight:600;">Holding</span>'}
                         </div>
-                        <div class="trade-actions">
-                            ${!trade.sell ? `<button class="edit-btn" onclick="editTrade(${trade.id})">Sell Now</button>` : ''}
-                            <button class="delete-btn-sm" onclick="deleteTrade(${trade.id})">🗑️</button>
-                        </div>
+                        ${isSold ? `<div class="${plClass}" style="margin-top:5px;">P/L: ₹${pl.toLocaleString()}</div>` : ''}
                     </div>
-                `;
-            }).join('');
+                    <div class="trade-actions" style="flex-direction:column; gap:5px;">
+                        ${!isSold ? `<button class="btn-sell" onclick="sellTrade(${t.id})">Sell</button>` : ''}
+                        <button class="delete-btn-sm" onclick="deleteTrade(${t.id})">🗑️</button>
+                    </div>
+                </div>`;
+             }).join('');
+        }
+
+        function sellTrade(id) {
+            const trade = trades.find(t => t.id === id);
+            if (trade) {
+                showPrompt(`Sell Price for ${trade.name} (Qty: ${trade.qty})?`, '', (price) => {
+                    if (price && !isNaN(parseFloat(price))) {
+                        trade.sell = parseFloat(price);
+                        localStorage.setItem('trades', JSON.stringify(trades));
+                        updateTradeList();
+                        showFeedback('Stock Sold! 💰', 'success');
+                    }
+                });
+            }
         }
 
         function deleteTrade(id) {
             trades = trades.filter(t => t.id !== id);
             localStorage.setItem('trades', JSON.stringify(trades));
             updateTradeList();
-            showFeedback('Trade deleted.', 'success');
+            showFeedback('Entry Removed', 'success');
         }
 
-        function editTrade(id) {
-            const trade = trades.find(t => t.id === id);
-            if (trade) {
-                showPrompt('Enter New Sell Price (₹):', trade.sell || '', (newSell) => {
-                    if (newSell !== null && newSell.trim() !== '' && !isNaN(parseFloat(newSell))) {
-                        const sellValue = parseFloat(newSell);
-                        if (sellValue > 0) {
-                            trade.sell = sellValue;
-                            localStorage.setItem('trades', JSON.stringify(trades));
-                            updateTradeList();
-                            showFeedback('Sell Price updated! P/L calculated.', 'success');
-                        } else {
-                            showFeedback('Invalid price entered.', 'error');
-                        }
-                    }
-                });
-            }
+        // To-Do Logic
+        function addTodo(){
+            const v=document.getElementById('todoInput').value; if(!v) return;
+            todos.unshift({id:Date.now(), task:v, done:false}); localStorage.setItem('todos',JSON.stringify(todos)); 
+            document.getElementById('todoInput').value='';
+            updateTodoList();
         }
+        function updateTodoList(){
+            const l=document.getElementById('todoList');
+            // Added text-decoration and opacity logic here
+            l.innerHTML = todos.map(t=>`
+                <div class="trade-item" style="border-left:4px solid ${t.done?'#10b981':'#f59e0b'}">
+                    <div onclick="toggleTodo(${t.id})" style="flex:1; cursor:pointer; text-decoration: ${t.done ? 'line-through' : 'none'}; opacity: ${t.done ? '0.6' : '1'}; transition: all 0.2s;">
+                        ${t.task}
+                    </div>
+                    <button class="delete-btn-sm" onclick="todos=todos.filter(x=>x.id!=${t.id});localStorage.setItem('todos',JSON.stringify(todos));updateTodoList()">🗑️</button>
+                </div>
+            `).join('');
+        }
+        function toggleTodo(id){ const i=todos.find(x=>x.id==id); if(i){i.done=!i.done; localStorage.setItem('todos',JSON.stringify(todos)); updateTodoList();} }
 
-        // --- Data Export Functions ---
+        // Theme
+        const themes={ocean:{p:'#2563eb',d:'#1d4ed8',s:'#a7b7e8',e:'#6882cf'},sunset:{p:'#ea580c',d:'#c2410c',s:'#fdba74',e:'#fb923c'},forest:{p:'#059669',d:'#047857',s:'#6ee7b7',e:'#10b981'},royal:{p:'#7c3aed',d:'#6d28d9',s:'#c4b5fd',e:'#8b5cf6'}};
+        function applyTheme(n){
+            const t=themes[n]; if(!t)return;
+            document.documentElement.style.setProperty('--primary-color',t.p);
+            document.documentElement.style.setProperty('--primary-dark',t.d);
+            document.documentElement.style.setProperty('--bg-gradient-start',t.s);
+            document.documentElement.style.setProperty('--bg-gradient-end',t.e);
+            document.querySelectorAll('.theme-option').forEach(e=>e.classList.remove('selected'));
+            document.getElementById('theme-'+n).classList.add('selected');
+            localStorage.setItem('theme',n);
+        }
+        function saveApiKey(){ const k=document.getElementById('geminiApiKey').value; if(k){localStorage.setItem('geminiApiKey',k);currentApiKey=k;showFeedback('Key Saved');} }
+        function clearAllData(){ if(confirm('Reset?')){localStorage.clear();location.reload();} }
         
-        function convertToCSV(data, headers) {
-            let csv = headers.join(',') + '\n';
-            data.forEach(row => {
-                csv += headers.map(header => {
-                    let value = row[header] === undefined || row[header] === null ? '' : row[header];
-                    // Handle commas and quotes within data
-                    if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-                        value = `"${value.replace(/"/g, '""')}"`;
-                    }
-                    return value;
-                }).join(',') + '\n';
-            });
-            return csv;
-        }
-
-        function downloadCSV(csv, filename) {
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            if (link.download !== undefined) { 
-                const url = URL.createObjectURL(blob);
-                link.setAttribute("href", url);
-                link.setAttribute("download", filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                showFeedback('CSV file downloaded successfully!', 'success');
-            }
-        }
-
-        function exportTrades() {
-            if (trades.length === 0) {
-                showFeedback('No trades found to export.', 'error');
-                return;
-            }
-            
-            const exportableTrades = trades.map(trade => ({
-                Name: trade.name.toUpperCase(),
-                Buy_Price: trade.buy,
-                Quantity: trade.qty,
-                Sell_Price: trade.sell || 'N/A',
-                P_L_Amount: trade.sell ? (trade.sell - trade.buy) * trade.qty : 'Pending',
-                Trade_Date: trade.date
-            }));
-
-            const headers = ['Name', 'Buy_Price', 'Quantity', 'Sell_Price', 'P_L_Amount', 'Trade_Date'];
-            const csv = convertToCSV(exportableTrades, headers);
-            downloadCSV(csv, `Dhaval_Stocks_${new Date().toISOString().slice(0, 10)}.csv`);
-        }
-
-        // --- NUTRITION ANALYZER (UPDATED for Chart) ---
-
-        function extractGrams(dataArray, nutrientName) {
-            const item = dataArray.find(item => item.nutrient.toLowerCase().includes(nutrientName.toLowerCase()));
-            if (item && item.value) {
-                const match = item.value.match(/(\d+(\.\d+)?)\s*g/i); // Look for number followed by 'g'
-                return match ? parseFloat(match[1]) : 0;
-            }
-            return 0;
-        }
-
-        function drawMacroPieChart(macros, foodName) {
-            const chartData = [macros.protein, macros.carbs, macros.fat];
-            const labels = ['Protein', 'Carbs', 'Fat'];
-            
-            // Destroy previous chart instance if it exists
-            if (macroChart) {
-                macroChart.destroy();
-            }
-
-            const ctx = document.getElementById('macroPieChart').getContext('2d');
-            macroChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: chartData,
-                        backgroundColor: [
-                            'rgba(16, 185, 129, 0.8)', // Green for Protein
-                            'rgba(251, 191, 36, 0.8)', // Yellow for Carbs
-                            'rgba(239, 68, 68, 0.8)'   // Red for Fat
-                        ],
-                        borderColor: [
-                            'rgba(16, 185, 129, 1)',
-                            'rgba(251, 191, 36, 1)',
-                            'rgba(239, 68, 68, 1)'
-                        ],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 14,
-                                    family: 'Inter'
-                                }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Macro Breakdown (in grams)',
-                            font: {
-                                size: 16,
-                                family: 'Inter',
-                                weight: '600'
-                            }
-                        },
-                        tooltip: {
-                            // Custom tooltip to show value on hover
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed !== null) {
-                                        label += context.parsed + ' g';
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+        // Init
+        window.onload = function(){
+            applyTheme(localStorage.getItem('theme')||'ocean');
+            updateWardrobeDisplay(); updateTradeList(); updateTodoList();
+            if(currentApiKey) document.getElementById('geminiApiKey').value = "********";
         }
         
+        // Nutrition Fix - Visual Restoration
         async function analyzeNutrition() {
-            const foodQuery = document.getElementById('foodInput').value.trim();
-            const resultDiv = document.getElementById('nutritionResult');
-            
-            if (!foodQuery) {
-                showFeedback("Please enter a food item and quantity (e.g., 100 grams paneer).", 'error');
-                return;
-            }
+             const q=document.getElementById('foodInput').value; if(!q) { showFeedback('Please enter food item', 'error'); return; }
+             
+             document.getElementById('nutritionResult').style.display='block'; 
+             document.getElementById('nutritionResult').innerText='Loading... (AI is thinking)';
+             
+             const data = await makeLLMCall(
+                 `Analyze nutrition for: ${q}`, 
+                 "Return STRICT JSON only. Format: { \"food_name\": \"string\", \"data\": [{\"nutrient\": \"Calories\", \"value\": \"string\"}, {\"nutrient\": \"Protein\", \"value\": \"string\"}, {\"nutrient\": \"Carbs\", \"value\": \"string\"}, {\"nutrient\": \"Fat\", \"value\": \"string\"}] }", 
+                 {responseMimeType: "application/json"}
+             );
+             
+             if (data === "API_KEY_MISSING") {
+                 document.getElementById('nutritionResult').innerHTML = '<div style="color:red; text-align:center;">⚠️ Gemini API Key Missing!<br>Go to <b>Settings</b> tab to enter it.</div>';
+                 showFeedback("Please set API Key in Settings", "error");
+                 return;
+             }
 
-            const systemPrompt = "You are an expert Indian diet and nutrition analyst. Analyze the user's food input and quantity. Provide the analysis in the requested JSON format. Ensure all key macro-nutrients (Calories, Protein, Carbs, Fat) are included in the 'data' array.";
-            
-            const userQuery = `Analyze the nutritional value of: ${foodQuery}. Provide the food name and the breakdown.`;
-            
-            const responseConfig = {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: "OBJECT",
-                    properties: {
-                        food_name: { type: "STRING", description: "The normalized name and quantity of the food analyzed (e.g., 100 grams Roasted Chana)." },
-                        data: {
-                            type: "ARRAY",
-                            description: "An array of key nutritional metrics.",
-                            items: {
-                                type: "OBJECT",
-                                properties: {
-                                    nutrient: { type: "STRING" },
-                                    value: { type: "STRING" }
-                                }
-                            }
-                        }
-                    }
-                }
-            };
+             if (!data) {
+                 document.getElementById('nutritionResult').innerHTML = '<div style="color:red; text-align:center;">❌ AI Error. Please try again.</div>';
+                 showFeedback("AI did not respond properly.", "error");
+                 return;
+             }
 
-            resultDiv.innerHTML = '<div class="loading">Fetching nutrition data using Gemini AI... (Execution Mode ON)</div>';
-            resultDiv.style.display = 'block';
+             if(data && data.data && Array.isArray(data.data)) {
+                 const macros = {
+                    protein: extractGrams(data.data, 'protein'),
+                    carbs: extractGrams(data.data, 'carb'),
+                    fat: extractGrams(data.data, 'fat'),
+                 };
 
-            const nutritionData = await makeLLMCall(userQuery, systemPrompt, responseConfig);
-            
-            // Check for API key error
-            if (nutritionData === "API_KEY_MISSING") {
-                resultDiv.innerHTML = '<div>Go to Settings to enter your Gemini API Key to analyze nutrition.</div>';
-                return; 
-            }
+                 let tableHTML = `<table class="nutrition-table"><thead><tr><th>Nutrient</th><th>Value (per serving)</th></tr></thead><tbody>`;
+                 data.data.forEach(item => {
+                    const isMacro = item.nutrient.match(/Calories|Protein|Carb|Fat/i);
+                    tableHTML += `
+                        <tr>
+                            <td style="${isMacro ? 'font-weight:700; color:var(--primary-dark);' : ''}">${item.nutrient}</td>
+                            <td>${item.value}</td>
+                        </tr>
+                    `;
+                 });
+                 tableHTML += `</tbody></table>`;
 
-            if (!nutritionData || !nutritionData.data) {
-                resultDiv.innerHTML = '<div>Error: Could not get structured data. Please try a different query.</div>';
-                showFeedback('Error in fetching nutrition data.', 'error');
-                return;
-            }
-            
-            // Extract macros for the chart
-            const macros = {
-                protein: extractGrams(nutritionData.data, 'protein'),
-                carbs: extractGrams(nutritionData.data, 'carb'),
-                fat: extractGrams(nutritionData.data, 'fat'),
-            };
-
-            // --- UI Rendering ---
-            let tableHTML = `<table class="nutrition-table"><thead><tr><th>Nutrient</th><th>Value (per serving)</th></tr></thead><tbody>`;
-            
-            nutritionData.data.forEach(item => {
-                const isMacro = item.nutrient.match(/Calories|Protein|Carb|Fat/i);
-                tableHTML += `
-                    <tr>
-                        <td class="${isMacro ? 'main-macro' : ''}">${item.nutrient}</td>
-                        <td>${item.value}</td>
-                    </tr>
-                `;
-            });
-
-            tableHTML += `</tbody></table>`;
-            
-            // Combining table and chart into a responsive wrapper
-            // Stacking: Chart (Visual) first, then Table (Numeric)
-            resultDiv.innerHTML = `
-                <strong style="color: #059669; font-size: 1.1em; display: block; margin-bottom: 10px;">📊 Nutrition Breakdown for: ${nutritionData.food_name.toUpperCase()}</strong>
-                <div class="nutrition-table-wrapper">
-                    <div class="macro-chart-container">
+                 document.getElementById('nutritionResult').innerHTML = `
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <h3 style="color: var(--primary-color); margin-bottom: 5px;">${data.food_name.toUpperCase()}</h3>
+                        <small style="color: #6b7280;">Nutritional Breakdown</small>
+                    </div>
+                    <div class="macro-chart-container" style="height: 250px;">
                         <canvas id="macroPieChart"></canvas>
                     </div>
                     ${tableHTML}
-                </div>
-            `;
-            
-            // Draw the chart after the canvas element is in the DOM
-            drawMacroPieChart(macros, nutritionData.food_name);
-
-            document.getElementById('foodInput').value = ''; // Clear input after successful analysis
-            showFeedback('Nutrition Chart Ready! Ab execution time hai! 💪', 'success');
+                 `;
+                 
+                 drawMacroPieChart(macros, data.food_name);
+                 showFeedback("Nutrition Chart Loaded! 🍎", "success");
+             } else {
+                 showFeedback('AI Error: Bad data format', 'error');
+                 document.getElementById('nutritionResult').innerHTML = '<div style="color:orange; text-align:center;">⚠️ Data format invalid. Try simpler keyword.</div>';
+             }
         }
-
-
-        // --- Habits Tracker Functions ---
-        
-        function getTodayDateString() {
-            return new Date().toDateString();
-        }
-
-        function initHabits() {
-            document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
-            const today = getTodayDateString();
-            
-            document.querySelectorAll('.habit-item').forEach(item => {
-                const habitName = item.getAttribute('data-habit');
-                if (habits[habitName] && habits[habitName].date === today) {
-                    item.classList.add('checked');
-                } else {
-                    item.classList.remove('checked');
-                }
-            });
-            updateStreak();
-        }
-
-        function toggleHabit(habit) {
-            const today = getTodayDateString();
-            const item = document.querySelector(`[data-habit="${habit}"]`);
-
-            if (!habits[habit]) habits[habit] = { count: 0, date: '' };
-            
-            if (habits[habit].date === today) {
-                habits[habit].date = ''; 
-                item.classList.remove('checked');
-                showFeedback(`Unchecked ${habit}. Keep focusing on execution!`, 'error');
-            } else {
-                habits[habit].date = today;
-                habits[habit].count = (habits[habit].count || 0) + 1;
-                item.classList.add('checked');
-                showFeedback(`Great job! ${habit} done for the day. ✅`, 'success');
-            }
-            
-            localStorage.setItem('habits', JSON.stringify(habits));
-            updateStreak();
-        }
-
-        function updateStreak() {
-            const today = new Date();
-            let streak = 0;
-            let currentDay = new Date(today.getTime());
-
-            for (let i = 0; i < 365; i++) {
-                const dayString = currentDay.toDateString();
-                const gymHabit = habits['gym'];
-                
-                if (gymHabit && gymHabit.date === dayString) {
-                    streak++;
-                    currentDay.setDate(currentDay.getDate() - 1);
-                } else if (i === 0 && gymHabit && gymHabit.date !== getTodayDateString()) {
-                    break;
-                } else if (i > 0 && gymHabit && gymHabit.date !== dayString) {
-                    break;
-                } else {
-                    break;
-                }
-            }
-
-            const streakDiv = document.getElementById('streakInfo');
-            if (streak > 0) {
-                streakDiv.style.display = 'block';
-                streakDiv.textContent = `Gym Streak: ${streak} day${streak > 1 ? 's' : ''}! 🔥 Keep up the Warrior energy!`;
-            } else {
-                streakDiv.style.display = 'none';
-            }
-        }
-
-        // --- LLM Integration: Execution Tip ---
-        async function generateExecutionTip() {
-            const today = getTodayDateString();
-            const habitNames = ['gym', 'water', 'meditation', 'code'];
-            
-            let checkedHabits = [];
-            let uncheckedHabits = [];
-
-            habitNames.forEach(name => {
-                const isChecked = habits[name] && habits[name].date === today;
-                if (isChecked) {
-                    checkedHabits.push(name);
-                } else {
-                    uncheckedHabits.push(name);
-                }
-            });
-
-            const tipDiv = document.getElementById('llmHabitTip');
-
-            if (checkedHabits.length === 0 && uncheckedHabits.length === 4) {
-                 tipDiv.innerHTML = '<strong style="color: #ef4444;">No habits tracked today!</strong> You need a tip to start.';
-            }
-
-            const systemPrompt = "You are a motivating productivity coach focused on execution. Analyze the user's checked and unchecked habits and provide a single, short, high-energy, and actionable tip (max 2 sentences) to either celebrate progress or kickstart the most critical unchecked habit (Side Code or Gym, if unchecked). DO NOT include greetings or sign-offs.";
-            
-            const userQuery = `Habits completed today: ${checkedHabits.join(', ') || 'None'}. Habits remaining: ${uncheckedHabits.join(', ') || 'None'}. Provide a daily execution tip.`;
-
-            tipDiv.innerHTML = '<div class="loading">Analyzing your daily discipline...</div>';
-            tipDiv.style.display = 'block';
-
-            const tipText = await makeLLMCall(userQuery, systemPrompt);
-            
-            // Check for API key error
-            if (tipText === "API_KEY_MISSING") {
-                tipDiv.innerHTML = '<strong style="color: #ef4444;">Please enter your Gemini API Key in the Settings (⚙️) tab to get an execution tip.</strong>';
-                return;
-            }
-
-            tipDiv.innerHTML = tipText;
-            showFeedback('Execution Tip received! Get to work. 💻', 'success');
-        }
-        
-        // --- Settings Functions: Theme and API Key Management ---
-
-        function initApiKey() {
-            const storedKey = localStorage.getItem('geminiApiKey');
-            const keyInput = document.getElementById('geminiApiKey');
-            const statusEl = document.getElementById('apiKeyStatus');
-
-            if (storedKey) {
-                currentApiKey = storedKey;
-                // Mask the key for display
-                keyInput.value = storedKey.substring(0, 5) + '...' + storedKey.substring(storedKey.length - 4);
-                keyInput.type = 'password';
-                statusEl.textContent = '🔑 Key Loaded. Gemini AI is ready.';
-                statusEl.style.color = '#10b981';
-            } else {
-                currentApiKey = "";
-                keyInput.type = 'text';
-                statusEl.textContent = '❌ API Key Missing! Please enter your key to use AI features.';
-                statusEl.style.color = '#ef4444';
-            }
-        }
-
-        function saveApiKey() {
-            const keyInput = document.getElementById('geminiApiKey');
-            const newKey = keyInput.value.trim();
-            const statusEl = document.getElementById('apiKeyStatus');
-
-            // Basic validation: Check if it looks like a key and isn't the masked value
-            if (newKey.length > 30 && !newKey.includes('...')) { 
-                localStorage.setItem('geminiApiKey', newKey);
-                currentApiKey = newKey;
-                initApiKey(); // Reload status and mask input
-                showFeedback('API Key saved successfully! Gemini AI unlocked.', 'success');
-            } else if (newKey.includes('...')) {
-                showFeedback('Key is already saved (masked). If you need to change it, enter the full new key.', 'error');
-            } else {
-                statusEl.textContent = 'Invalid Key format. Please enter the full key.';
-                statusEl.style.color = '#ef4444';
-            }
-        }
-
-        function setTheme() {
-            const color = document.getElementById('themeColor').value;
-            const lighterColor = '#667eea';
-
-            const styleTag = document.createElement('style');
-            styleTag.innerHTML = `
-                :root { --primary-color: ${color}; }
-                .tab-btn.active { color: ${color} !important; }
-                .tab-btn.active, input:focus, select:focus { border-color: ${color} !important; box-shadow: 0 0 0 3px ${color}33 !important; }
-                .btn { background: linear-gradient(135deg, ${color}, #1d4ed8); }
-                .btn:hover { box-shadow: 0 10px 25px ${color}33; }
-                body { background: linear-gradient(135deg, ${lighterColor} 0%, ${color} 100%); }
-                .stats { background: linear-gradient(135deg, ${color}, #1d4ed8); }
-            `;
-            const existingStyle = document.querySelector('style[data-theme="true"]');
-            if (existingStyle) existingStyle.remove();
-            
-            styleTag.setAttribute('data-theme', 'true');
-            document.head.appendChild(styleTag);
-            
-            const manifestLink = document.querySelector('link[rel="manifest"]');
-            if (manifestLink) {
-                let manifestData = manifestLink.getAttribute('href');
-                manifestData = manifestData.replace(/#2563eb/g, color);
-                manifestLink.setAttribute('href', manifestData);
-            }
-            
-            showFeedback(`Theme color set to ${color}!`, 'success');
-        }
-
-        function clearAllData() {
-            // Using window.confirm as a fallback for the system modal, although Custom Modal is preferred.
-            if (window.confirm('Are you absolutely sure you want to delete ALL your data (Stocks, Habits)? This cannot be undone.')) {
-                localStorage.removeItem('trades');
-                localStorage.removeItem('habits');
-                
-                trades = [];
-                habits = {};
-                
-                updateTradeList();
-                initHabits();
-
-                showFeedback('All data has been cleared. Clean slate for execution! 💪', 'success');
-            } else {
-                showFeedback('Data clearance cancelled.', 'error');
-            }
-        }
-
-        // --- Initialize App ---
-        
-        window.onload = function() {
-            setTheme(); 
-            initApiKey(); // Load API Key status
-            updateTradeList();
-            initHabits(); 
-        };
     </script>
 </body>
 </html>

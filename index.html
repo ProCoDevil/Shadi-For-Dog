@@ -335,10 +335,18 @@
         
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* THEME GRID */
-        .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .theme-option { height: 40px; border-radius: 50%; margin: 0 auto; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-        .theme-option.selected { border-color: #334155; transform: scale(1.1); }
+        /* THEME GRID UPDATED */
+        .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+        .theme-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .theme-option { height: 45px; width: 45px; border-radius: 50%; margin: 0 auto; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: all 0.2s; }
+        .theme-label { font-size: 0.75rem; margin-top: 6px; font-weight: 600; color: #475569; }
+        
+        /* Highlight selected theme */
+        .theme-option.selected { 
+            border-color: #334155; 
+            transform: scale(1.1); 
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.5);
+        }
 
     </style>
 </head>
@@ -476,11 +484,24 @@
 
             <div class="glass-card">
                 <label>Theme Color</label>
-                <div class="theme-grid" style="margin-top: 10px;">
-                    <div class="theme-option" id="theme-ocean" style="background: #0ea5e9;" onclick="applyTheme('ocean')"></div>
-                    <div class="theme-option" id="theme-sunset" style="background: #f97316;" onclick="applyTheme('sunset')"></div>
-                    <div class="theme-option" id="theme-forest" style="background: #10b981;" onclick="applyTheme('forest')"></div>
-                    <div class="theme-option" id="theme-royal" style="background: #8b5cf6;" onclick="applyTheme('royal')"></div>
+                <!-- Updated Theme Grid with Labels -->
+                <div class="theme-grid">
+                    <div class="theme-item" onclick="applyTheme('ocean')">
+                        <div class="theme-option" id="theme-ocean" style="background: #0ea5e9;"></div>
+                        <span class="theme-label">Ocean</span>
+                    </div>
+                    <div class="theme-item" onclick="applyTheme('sunset')">
+                        <div class="theme-option" id="theme-sunset" style="background: #f97316;"></div>
+                        <span class="theme-label">Sunset</span>
+                    </div>
+                    <div class="theme-item" onclick="applyTheme('forest')">
+                        <div class="theme-option" id="theme-forest" style="background: #10b981;"></div>
+                        <span class="theme-label">Forest</span>
+                    </div>
+                    <div class="theme-item" onclick="applyTheme('royal')">
+                        <div class="theme-option" id="theme-royal" style="background: #8b5cf6;"></div>
+                        <span class="theme-label">Royal</span>
+                    </div>
                 </div>
             </div>
 

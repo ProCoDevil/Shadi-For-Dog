@@ -1103,69 +1103,85 @@
         activity: 1.55,
       };
 
-      const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=";
+      const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=";
       let macroChart = null;
 
-      async function makeLLMCall(query, prompt, config = {}) {
+      async function makeLLMCall(query, prompt, config = {}, maxRetries = 3) {
         const currentKey = getEffectiveKey();
-  
+
         if (!currentKey) {
           showFeedback("🔑 Key Missing! Add in Settings.", "error");
           return "API_KEY_MISSING";
         }
 
-        try {
-          const res = await fetch(API_BASE + currentKey, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: query }] }],
-              systemInstruction: { parts: [{ text: prompt }] },
-              generationConfig: config,
-            }),
-          });
+        let delay = 1000;
+        for (let i = 0; i < maxRetries; i++) {
+          try {
+            const res = await fetch(API_BASE + currentKey, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: query }] }],
+                systemInstruction: { parts: [{ text: prompt }] },
+                generationConfig: config,
+              }),
+            });
 
-          if (!res.ok) {
-            const errBody = await res.text();
-            console.error("Gemini error", res.status, errBody);
-            if (res.status === 400 && errBody.includes("API key")) {
-              showFeedback("🚫 Invalid API Key", "error");
-              return "API_KEY_INVALID";
+            if (!res.ok) {
+              if (res.status === 503 || res.status === 429) {
+                if (i < maxRetries - 1) {
+                  console.warn(`API busy (Status ${res.status}). Retrying in ${delay}ms...`);
+                  await new Promise((r) => setTimeout(r, delay));
+                  delay *= 2; // Exponential backoff: 1s, 2s, 4s...
+                  continue;
+                }
+              }
+
+              const errBody = await res.text();
+              console.error("Gemini error", res.status, errBody);
+              if (res.status === 400 && errBody.includes("API key")) {
+                showFeedback("🚫 Invalid API Key", "error");
+                return "API_KEY_INVALID";
+              }
+              if (res.status === 403) {
+                showFeedback("🚫 Key not allowed / API not enabled", "error");
+                return "API_KEY_INVALID";
+              }
+              if (res.status === 404) {
+                showFeedback("Model not found - update model name", "error");
+                return null;
+              }
+              if (res.status === 429 || res.status === 503) {
+                showFeedback("Servers are busy - please try again later", "error");
+                return null;
+              }
+              throw new Error(`${res.status} ${res.statusText}`);
             }
-            if (res.status === 403) {
-              showFeedback("🚫 Key not allowed / API not enabled", "error");
-              return "API_KEY_INVALID";
+
+            const data = await res.json();
+            let textResponse = data.candidates[0].content.parts[0].text;
+
+            if (config.responseMimeType === "application/json") {
+              textResponse = textResponse
+                .replace(/^```json\s*/, "")
+                .replace(/\s*```$/, "");
+              try {
+                return JSON.parse(textResponse);
+              } catch (e) {
+                console.error(e);
+                return null;
+              }
             }
-            if (res.status === 404) {
-              showFeedback("Model not found - update model name", "error");
+            return textResponse;
+          } catch (e) {
+            console.error(e);
+            if (i === maxRetries - 1) {
+              showFeedback("Connection Error after retries", "error");
               return null;
             }
-            if (res.status === 429) {
-              showFeedback("Quota/rate limit hit - wait a bit", "error");
-              return null;
-            }
-            throw new Error(`${res.status} ${res.statusText}`);
+            await new Promise((r) => setTimeout(r, delay));
+            delay *= 2;
           }
-
-          const data = await res.json();
-          let textResponse = data.candidates[0].content.parts[0].text;
-
-          if (config.responseMimeType === "application/json") {
-            textResponse = textResponse
-              .replace(/^```json\s*/, "")
-              .replace(/\s*```$/, "");
-            try {
-              return JSON.parse(textResponse);
-            } catch (e) {
-              console.error(e);
-              return null;
-            }
-          }
-          return textResponse;
-        } catch (e) {
-          console.error(e);
-          showFeedback("Connection Error", "error");
-          return null;
         }
       }
 
